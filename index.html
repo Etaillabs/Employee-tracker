@@ -351,12 +351,6 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 .btn-full-report:hover { background:rgba(79,70,229,0.14); box-shadow:0 0 14px rgba(79,70,229,0.14); }
 
 /* ──────────── FULL REPORT PAGE ──────────── */
-#page-fullreport {
-  display:none; position:relative; z-index:1;
-  min-height: calc(100vh - var(--nav-h));
-}
-#page-fullreport.active { display:block; }
-
 #reportOverlay {
   display:none;
 }
@@ -721,7 +715,6 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
 <!-- ═══ TAB 3 — FULL REPORT PAGE ═══ -->
 <div class="page" id="page-fullreport">
-  <div class="report-modal">
     <button class="report-back" id="reportBackBtn">← Back to All Employees</button>
     <div id="reportBody"></div>
   </div>
