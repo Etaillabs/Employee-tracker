@@ -646,31 +646,44 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
         <div class="field-card"><div class="field-card-label">Feeds Content</div><input type="number" id="f_feeds_content" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_feeds_content">—</b>/day</div></div>
         <div class="field-card"><div class="field-card-label">PLP Production</div><input type="number" id="f_plp_prod" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_plp_prod">—</b>/day</div></div>
         <div class="field-card"><div class="field-card-label">PLP Content</div><input type="number" id="f_plp_content" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_plp_content">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">Clone Production</div><input type="number" id="f_clone_prod" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_clone_prod">—</b>/day</div></div>
       </div>
 
       <div class="sec-header"><h2>Graphics Work</h2><div class="sec-line"></div></div>
       <div class="fields-grid">
         <div class="field-card"><div class="field-card-label">Feeds Graphics</div><input type="number" id="f_feeds_graphics" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_feeds_graphics">—</b>/day</div></div>
         <div class="field-card"><div class="field-card-label">PLP Graphics</div><input type="number" id="f_plp_graphics" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_plp_graphics">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">Image Collection</div><input type="number" id="f_img_collection" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_img_collection">—</b>/day</div></div>
       </div>
 
       <div class="sec-header"><h2>Quality Control (QC)</h2><div class="sec-line"></div></div>
       <div class="qc-grid">
         <div class="field-card"><div class="field-card-label">QC — Feeds</div><input type="number" id="f_qc_feeds" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qc_feeds">—</b>/day</div></div>
         <div class="field-card"><div class="field-card-label">QC — PLP</div><input type="number" id="f_qc_plp" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qc_plp">—</b>/day</div></div>
-        <div class="field-card">
-          <div class="field-card-label">QC — QSG</div>
-          <input type="number" id="f_qc_qsg_num" min="0" placeholder="0" style="margin-bottom:6px">
-          <input type="text" id="f_qc_qsg_text" placeholder="Short note…">
-          <div class="target-hint">Target: <b id="t_qc_qsg">—</b>/day</div>
+        <div class="field-card"><div class="field-card-label">QC — QSG</div><input type="number" id="f_qc_qsg" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qc_qsg">—</b>/day</div></div>
+      </div>
+
+      <div class="sec-header"><h2>Upload & Delivery</h2><div class="sec-line"></div></div>
+      <div class="fields-grid">
+        <div class="field-card"><div class="field-card-label">Feeds Upload</div><input type="number" id="f_feeds_upload" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_feeds_upload">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">PLP Upload</div><input type="number" id="f_plp_upload" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_plp_upload">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">Clone Upload</div><input type="number" id="f_clone_upload" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_clone_upload">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">Feed & PLP Files Delivered</div><input type="number" id="f_files_delivered" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_files_delivered">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">QSG Delivered</div><input type="number" id="f_qsg_delivered" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qsg_delivered">—</b>/day</div></div>
+      </div>
+
+      <div class="sec-header"><h2>QSG Production</h2><div class="sec-line"></div></div>
+      <div class="fields-grid">
+        <div class="field-card" style="grid-column:span 2">
+          <div class="field-card-label">QSG Production <span style="font-size:10px;color:var(--text3);font-weight:400">(describe tasks, e.g. "Design 1, Layout 2")</span></div>
+          <textarea id="f_qsg_prod" placeholder="e.g. Design 1, Layout 2, Banner 3…" style="min-height:70px"></textarea>
         </div>
       </div>
 
-      <div class="sec-header"><h2>Upload & QSG Production</h2><div class="sec-line"></div></div>
+      <div class="sec-header"><h2>Price Monitoring</h2><div class="sec-line"></div></div>
       <div class="fields-grid">
-        <div class="field-card"><div class="field-card-label">Feeds/PLP Upload</div><input type="number" id="f_upload" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_upload">—</b>/day</div></div>
-        <div class="field-card"><div class="field-card-label">QSG Production</div><input type="number" id="f_qsg_prod" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qsg_prod">—</b>/day</div></div>
         <div class="field-card"><div class="field-card-label">Price Monitoring</div><input type="number" id="f_price_mon" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_price_mon">—</b>/day</div></div>
+        <div class="field-card"><div class="field-card-label">Price Monitoring QC</div><input type="number" id="f_price_mon_qc" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_price_mon_qc">—</b>/day</div></div>
       </div>
 
       <div class="sec-header"><h2>Meta Content & SEO</h2><div class="sec-line"></div></div>
@@ -688,6 +701,14 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
         <div class="field-card" style="grid-column:span 2">
           <div class="field-card-label">Others (short note)</div>
           <textarea id="f_others" placeholder="Describe any other tasks completed today…"></textarea>
+        </div>
+      </div>
+
+      <div class="sec-header"><h2>Comments & Remarks</h2><div class="sec-line"></div></div>
+      <div class="fields-grid">
+        <div class="field-card" style="grid-column:span 2">
+          <div class="field-card-label">Comment / Remark <span style="font-size:10px;color:var(--text3);font-weight:400">(difficulties, blockers, or any note for the day)</span></div>
+          <textarea id="f_comment" placeholder="e.g. Faced issue with image sourcing for 3 SKUs, pending approval from manager…" style="min-height:80px"></textarea>
         </div>
       </div>
 
@@ -778,24 +799,32 @@ const SYNC_INTERVAL = 3 * 60 * 1000; // 3 minutes
 
 // Field definitions: key | inputId | targetId | label | col-index in Sheet1
 const FIELDS = [
-  {key:'feeds_prod',    inp:'f_feeds_prod',    tgt:'t_feeds_prod',    lbl:'Feeds Production',         col:4 },
-  {key:'feeds_content', inp:'f_feeds_content', tgt:'t_feeds_content', lbl:'Feeds Content',            col:5 },
-  {key:'plp_prod',      inp:'f_plp_prod',      tgt:'t_plp_prod',      lbl:'PLP Production',           col:6 },
-  {key:'plp_content',   inp:'f_plp_content',   tgt:'t_plp_content',   lbl:'PLP Content',              col:7 },
-  {key:'feeds_graphics',inp:'f_feeds_graphics',tgt:'t_feeds_graphics',lbl:'Feeds Graphics',           col:8 },
-  {key:'plp_graphics',  inp:'f_plp_graphics',  tgt:'t_plp_graphics',  lbl:'PLP Graphics',             col:9 },
-  {key:'qc_feeds',      inp:'f_qc_feeds',      tgt:'t_qc_feeds',      lbl:'QC Feeds',                 col:10},
-  {key:'qc_plp',        inp:'f_qc_plp',        tgt:'t_qc_plp',        lbl:'QC PLP',                   col:11},
-  {key:'qc_qsg',        inp:'f_qc_qsg_num',    tgt:'t_qc_qsg',        lbl:'QC QSG',                   col:12},
-  {key:'upload',        inp:'f_upload',        tgt:'t_upload',        lbl:'Feeds/PLP Upload',          col:13},
-  {key:'qsg_prod',      inp:'f_qsg_prod',      tgt:'t_qsg_prod',      lbl:'QSG Production',           col:14},
-  {key:'price_mon',     inp:'f_price_mon',     tgt:'t_price_mon',     lbl:'Price Monitoring',         col:15},
-  {key:'meta_title',    inp:'f_meta_title',    tgt:'t_meta_title',    lbl:'Meta Title & Desc',        col:16},
-  {key:'meta_long',     inp:'f_meta_long',     tgt:'t_meta_long',     lbl:'Meta Longform',            col:17},
-  {key:'meta_qc',       inp:'f_meta_qc',       tgt:'t_meta_qc',       lbl:'Meta QC',                  col:18},
-  {key:'meta_html',     inp:'f_meta_html',     tgt:'t_meta_html',     lbl:'Meta Interlinking & HTML', col:19},
-  {key:'decann',        inp:'f_decann',        tgt:'t_decann',        lbl:'Decannibalization',        col:20},
-  {key:'landmark',      inp:'f_landmark',      tgt:'t_landmark',      lbl:'Landmark Production',      col:21},
+  {key:'feeds_prod',      inp:'f_feeds_prod',      tgt:'t_feeds_prod',      lbl:'Feeds Production',         col:4,  type:'number'},
+  {key:'feeds_content',   inp:'f_feeds_content',   tgt:'t_feeds_content',   lbl:'Feeds Content',            col:5,  type:'number'},
+  {key:'plp_prod',        inp:'f_plp_prod',        tgt:'t_plp_prod',        lbl:'PLP Production',           col:6,  type:'number'},
+  {key:'plp_content',     inp:'f_plp_content',     tgt:'t_plp_content',     lbl:'PLP Content',              col:7,  type:'number'},
+  {key:'feeds_graphics',  inp:'f_feeds_graphics',  tgt:'t_feeds_graphics',  lbl:'Feeds Graphics',           col:8,  type:'number'},
+  {key:'plp_graphics',    inp:'f_plp_graphics',    tgt:'t_plp_graphics',    lbl:'PLP Graphics',             col:9,  type:'number'},
+  {key:'qc_feeds',        inp:'f_qc_feeds',        tgt:'t_qc_feeds',        lbl:'QC Feeds',                 col:10, type:'number'},
+  {key:'qc_plp',          inp:'f_qc_plp',          tgt:'t_qc_plp',          lbl:'QC PLP',                   col:11, type:'number'},
+  {key:'qc_qsg',          inp:'f_qc_qsg',          tgt:'t_qc_qsg',          lbl:'QC QSG',                   col:12, type:'number'},
+  {key:'upload',          inp:'f_upload',          tgt:'t_upload',          lbl:'Feeds/PLP Upload',          col:13, type:'number'},
+  {key:'qsg_prod',        inp:'f_qsg_prod',        tgt:'t_qsg_prod',        lbl:'QSG Production',           col:14, type:'text'},
+  {key:'price_mon',       inp:'f_price_mon',       tgt:'t_price_mon',       lbl:'Price Monitoring',         col:15, type:'number'},
+  {key:'price_mon_qc',    inp:'f_price_mon_qc',    tgt:'t_price_mon_qc',    lbl:'Price Monitoring QC',      col:22, type:'number'},
+  {key:'meta_title',      inp:'f_meta_title',      tgt:'t_meta_title',      lbl:'Meta Title & Desc',        col:16, type:'number'},
+  {key:'meta_long',       inp:'f_meta_long',       tgt:'t_meta_long',       lbl:'Meta Longform',            col:17, type:'number'},
+  {key:'meta_qc',         inp:'f_meta_qc',         tgt:'t_meta_qc',         lbl:'Meta QC',                  col:18, type:'number'},
+  {key:'meta_html',       inp:'f_meta_html',       tgt:'t_meta_html',       lbl:'Meta Interlinking & HTML', col:19, type:'number'},
+  {key:'decann',          inp:'f_decann',          tgt:'t_decann',          lbl:'Decannibalization',        col:20, type:'number'},
+  {key:'landmark',        inp:'f_landmark',        tgt:'t_landmark',        lbl:'Landmark Production',      col:21, type:'number'},
+  {key:'files_delivered', inp:'f_files_delivered', tgt:'t_files_delivered', lbl:'Feed & PLP Files Delivered',col:23,type:'number'},
+  {key:'qsg_delivered',   inp:'f_qsg_delivered',   tgt:'t_qsg_delivered',   lbl:'QSG Delivered',            col:24, type:'number'},
+  {key:'img_collection',  inp:'f_img_collection',  tgt:'t_img_collection',  lbl:'Image Collection',         col:25, type:'number'},
+  {key:'plp_upload',      inp:'f_plp_upload',      tgt:'t_plp_upload',      lbl:'PLP Upload',               col:26, type:'number'},
+  {key:'feeds_upload',    inp:'f_feeds_upload',    tgt:'t_feeds_upload',    lbl:'Feeds Upload',             col:27, type:'number'},
+  {key:'clone_upload',    inp:'f_clone_upload',    tgt:'t_clone_upload',    lbl:'Clone Upload',             col:28, type:'number'},
+  {key:'clone_prod',      inp:'f_clone_prod',      tgt:'t_clone_prod',      lbl:'Clone Production',         col:29, type:'number'},
 ];
 
 // ═══════════════════════════════════════════════
