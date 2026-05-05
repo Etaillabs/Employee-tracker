@@ -921,7 +921,6 @@ function parseEmployees(csv) {
     FIELDS.forEach(f => { emp.targets[f.key] = parseFloat(c[f.col])||0; });
     if(emp.name) newList.push(emp);
   }
-  }
   if(newList.length) {
     // Handle removed employees: keep them in an archive but don't show in dropdown
     // (we keep old data, just don't add them back to active list)
@@ -1512,26 +1511,6 @@ function moTotal(subs, ago) {
 }
 </script>
 
-<!-- ══ APPS SCRIPT — paste this in your Google Sheet Extensions → Apps Script ══
-function doPost(e) {
-  try {
-    var data   = JSON.parse(e.postData.contents);
-    var sheet  = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Sheet2');
-    var fields = ['feeds_prod','feeds_content','plp_prod','plp_content',
-                  'feeds_graphics','plp_graphics','qc_feeds','qc_plp','qc_qsg',
-                  'upload','qsg_prod','price_mon','meta_title','meta_long',
-                  'meta_qc','meta_html','decann','landmark'];
-    var row = [data.empId, data.empName, data.date];
-    fields.forEach(function(f){ row.push(data.fields[f]||0); });
-    row.push(data.qsg_text||'', data.others||'');
-    sheet.appendRow(row);
-    return ContentService.createTextOutput('OK').setMimeType(ContentService.MimeType.TEXT);
-  } catch(err) {
-    return ContentService.createTextOutput('ERR: '+err.message);
-  }
-}
-function doGet(e) { return ContentService.createTextOutput('EtailLabs Tracker OK'); }
-=== Deploy as Web App → Execute as Me → Anyone can access → Copy URL → paste in WEB_APP_URL above ===
--->
+<!-- Apps Script code is in the separate EtailLabs_AppScript.gs file -->
 </body>
 </html>
