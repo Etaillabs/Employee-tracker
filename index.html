@@ -850,10 +850,11 @@ async function loadAll(showStatus=false) {
   try {
     const r = await fetch(CSV1 + '&nc=' + Date.now());
     const txt = await r.text();
-    if(!txt || txt.trim().startsWith('<!')) throw new Error('Not CSV');
+    console.log('[Sheet1] status:', r.status, '| first80:', txt.slice(0,80));
+    if(!txt || txt.trim().startsWith('<!')) throw new Error('Got HTML instead of CSV — sheet may not be published');
     parseEmployees(txt);
   } catch(e) {
-    console.warn('[Sheet1]', e.message);
+    console.warn('[Sheet1] FAILED:', e.message);
     if(!employees.length) loadFallback();
     ok = false;
   }
@@ -862,6 +863,7 @@ async function loadAll(showStatus=false) {
   try {
     const r2 = await fetch(CSV2 + '&nc=' + Date.now());
     const txt2 = await r2.text();
+    console.log('[Sheet2] status:', r2.status, '| first80:', txt2.slice(0,80));
     if(txt2 && !txt2.trim().startsWith('<!')) {
       const fresh = {};
       parseSubmissionsInto(txt2, fresh);
@@ -875,18 +877,17 @@ async function loadAll(showStatus=false) {
       }
       submissions = fresh;
     } else {
-      throw new Error('Empty or HTML response');
+      throw new Error('Empty or HTML response — sheet may not be published');
     }
   } catch(e) {
-    console.warn('[Sheet2]', e.message);
-    // Fall back to local only
+    console.warn('[Sheet2] FAILED:', e.message);
     submissions = {};
     const local = getLocalSubs();
     for(const id in local) submissions[id] = [...local[id]];
     ok = false;
   }
 
-  if(showStatus) setSyncBadge(ok);
+  setSyncBadge(ok);
   return ok;
 }
 
@@ -913,11 +914,13 @@ function parseEmployees(csv) {
       id:       c[1]||'',
       doj:      c[2]||'',
       desig:    c[3]||'',
-      imageUrl: c[23]||'',   // column X (0-indexed = 23)
+      imageUrl: (c[23]||'').trim(),   // column X (0-indexed = 23)
       targets:  {}
     };
+    console.log(`[emp] ${emp.name} | cols total: ${c.length} | imageUrl: "${emp.imageUrl}"`);
     FIELDS.forEach(f => { emp.targets[f.key] = parseFloat(c[f.col])||0; });
     if(emp.name) newList.push(emp);
+  }
   }
   if(newList.length) {
     // Handle removed employees: keep them in an archive but don't show in dropdown
@@ -995,8 +998,8 @@ async function doRefresh(auto=false) {
   setSyncBadge(null); // loading state
   const ok = await loadAll(true);
   btn.classList.remove('spinning');
-  // re-render whatever is visible
-  if(document.getElementById('page-report').classList.contains('active')) renderCards();
+  populateDropdown();
+  renderCards();
   if(currentEmp) refreshEntryState();
 }
 
@@ -1260,7 +1263,7 @@ function renderCards() {
   const grid=document.getElementById('empCardsGrid');
   if(!employees.length){grid.innerHTML='<p style="color:var(--text2);padding:20px">Loading…</p>';return;}
   grid.innerHTML='';
-  employees.forEach((emp,i)=>{
+  employees.forEach((emp)=>{
     const att=getAttMonth(emp.id);
     const photoHtml = emp.imageUrl
       ? `<div class="card-photo"><img src="${emp.imageUrl}" onerror="this.parentElement.innerHTML='<div class=card-photo-ph>${emp.name[0]}</div>'"></div>`
@@ -1268,7 +1271,8 @@ function renderCards() {
 
     const card=document.createElement('div');
     card.className='emp-card';
-    card.dataset.idx=i;
+    // Store empId on the card — safe even after array rebuilds
+    card.dataset.empid = emp.id;
     card.innerHTML=`
       ${photoHtml}
       <div class="card-name">${emp.name}</div>
@@ -1279,7 +1283,7 @@ function renderCards() {
       <div class="card-att-text">
         Attendance: <b style="color:var(--success)">${att.present}P</b> / <b style="color:var(--danger)">${att.absent}A</b> this month
       </div>
-      <button class="btn-full-report" onclick="openReport(${i})">📈 See Full Report</button>
+      <button class="btn-full-report" onclick="openReport('${emp.id}')">📈 See Full Report</button>
     `;
     grid.appendChild(card);
   });
@@ -1288,9 +1292,9 @@ function renderCards() {
 // ═══════════════════════════════════════════════
 // FULL REPORT — fixed open / close
 // ═══════════════════════════════════════════════
-function openReport(idx) {
-  const emp = employees[idx];
-  if(!emp) return;
+function openReport(empId) {
+  const emp = employees.find(e => e.id === empId);
+  if(!emp) { console.warn('openReport: emp not found for id', empId); return; }
   // Destroy old charts first
   destroyAllCharts();
   // Show overlay
