@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EtailLabs — Employee Work Tracker v5</title>
+<title>EtailLabs — Employee Work Tracker v6</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -448,6 +448,16 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
 /* Chart wrap */
 .chart-wrap { position:relative; height:210px; }
+
+/* Worked tasks list */
+.wt-list { display:flex; flex-direction:column; gap:5px; }
+.wt-row {
+  display:flex; justify-content:space-between; align-items:center;
+  padding:6px 10px; border-radius:7px;
+  background:var(--surface2); border:1px solid var(--border);
+}
+.wt-name { font-size:12px; font-weight:500; color:var(--text2); }
+.wt-count { font-size:13px; font-weight:700; color:var(--accent); }
 
 /* Month table */
 .m-table { width:100%; border-collapse:collapse; }
@@ -1343,7 +1353,6 @@ function buildReport(emp) {
   const perf  = tgt>0 ? Math.round((todayN/tgt)*100) : 0;
   const attPct= att.total>0 ? Math.round((att.present/att.total)*100) : 0;
 
-  // Yesterday
   const yest=new Date(today); yest.setDate(today.getDate()-1);
   const yestStr=yest.toISOString().split('T')[0];
   const yestE=subs.find(s=>s.date===yestStr);
@@ -1359,6 +1368,18 @@ function buildReport(emp) {
   const dc=(a,b)=>a>b?'up':a<b?'down':'same';
   const dt=(a,b)=>{const d=a-b;return d===0?'= Same':(d>0?'▲+':'▼')+d;};
 
+  // Worked tasks list — only fields with count > 0
+  const workedFields = todayE
+    ? FIELDS.filter(f=>(todayE.fields[f.key]||0)>0)
+    : [];
+  const workedHtml = workedFields.length
+    ? workedFields.map(f=>`
+        <div class="wt-row">
+          <span class="wt-name">${f.lbl}</span>
+          <span class="wt-count">${todayE.fields[f.key]}</span>
+        </div>`).join('')
+    : `<div style="color:var(--text3);font-size:13px;padding:8px 0">No entry for today</div>`;
+
   document.getElementById('reportBody').innerHTML=`
     <div class="r-hero">
       <div class="r-hero-left">
@@ -1371,17 +1392,33 @@ function buildReport(emp) {
       <div class="r-hero-right">
         <div class="kpi-row">
           <div class="kpi-box"><div class="kpi-lbl">Today's Count</div><div class="kpi-val kv-blue">${todayN}</div></div>
-          <div class="kpi-box"><div class="kpi-lbl">Daily Target</div><div class="kpi-val">${tgt}</div></div>
           <div class="kpi-box"><div class="kpi-lbl">Performance</div><div class="kpi-val ${perf>=80?'kv-green':perf>=50?'kv-amber':'kv-red'}">${perf}%</div></div>
           <div class="kpi-box"><div class="kpi-lbl">Attendance</div><div class="kpi-val ${attPct>=90?'kv-green':attPct>=70?'kv-amber':'kv-red'}">${attPct}%</div></div>
         </div>
-        <div class="chart-wrap"><canvas id="cvDoughnut"></canvas></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;">
+          <div>
+            <div class="r-section-title" style="margin-bottom:10px">Today's Worked Tasks</div>
+            <div class="wt-list">${workedHtml}</div>
+          </div>
+          <div>
+            <div class="r-section-title" style="margin-bottom:10px">Today's Performance</div>
+            <div class="chart-wrap" style="height:160px"><canvas id="cvDoughnut"></canvas></div>
+          </div>
+        </div>
       </div>
     </div>
 
     <div class="r-section">
       <div class="r-section-title">Attendance — This Month</div>
       <div class="att-grid">${buildAttGrid(emp.id)}</div>
+    </div>
+
+    <div class="r-section">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="r-section-title" style="margin-bottom:0">Last 10 Days — Daily Counts</div>
+        <div style="display:flex;gap:6px;" id="dayToggleWrap"></div>
+      </div>
+      <div id="dayDetailPanel"></div>
     </div>
 
     <div class="r-section">
@@ -1407,8 +1444,72 @@ function buildReport(emp) {
     </div>
   `;
 
-  // Give DOM a tick then draw charts
+  // Build last 10 days toggle
+  buildDayToggles(emp, subs);
+
   requestAnimationFrame(()=>{ setTimeout(()=>{ drawCharts(emp,subs,todayE,tgt); }, 60); });
+}
+
+function buildDayToggles(emp, subs) {
+  const wrap = document.getElementById('dayToggleWrap');
+  const panel = document.getElementById('dayDetailPanel');
+  if(!wrap||!panel) return;
+
+  // Build last 10 working days (skip weekends)
+  const days = [];
+  const now = new Date();
+  for(let d=0; days.length<10 && d<20; d++){
+    const dt = new Date(now); dt.setDate(now.getDate()-d);
+    if(dt.getDay()===0||dt.getDay()===6) continue;
+    const ds = dt.toISOString().split('T')[0];
+    const entry = subs.find(s=>s.date===ds);
+    days.push({ds, dt, entry});
+  }
+
+  let activeDay = days[0]?.ds;
+
+  function renderDayPanel(ds) {
+    activeDay = ds;
+    const day = days.find(d=>d.ds===ds);
+    // Update toggle button styles
+    wrap.querySelectorAll('.day-tog').forEach(b=>{
+      b.style.background = b.dataset.ds===ds ? '#4f46e5' : 'rgba(79,70,229,0.08)';
+      b.style.color = b.dataset.ds===ds ? '#fff' : '#4f46e5';
+    });
+    if(!day.entry){
+      panel.innerHTML=`<div style="color:var(--text3);font-size:13px;padding:12px 0">No submission for ${ds}</div>`;
+      return;
+    }
+    const total = Object.values(day.entry.fields).reduce((a,b)=>a+b,0);
+    const tgt = Object.values(emp.targets).reduce((a,b)=>a+b,0);
+    const perf = tgt>0?Math.min(Math.round((total/tgt)*100),200):0;
+    const rows = FIELDS.filter(f=>(day.entry.fields[f.key]||0)>0)
+      .map(f=>`<div class="wt-row"><span class="wt-name">${f.lbl}</span><span class="wt-count">${day.entry.fields[f.key]}</span></div>`).join('');
+    panel.innerHTML=`
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;">
+        <span style="font-size:13px;font-weight:600;color:var(--text)">${day.dt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'})}</span>
+        <span style="font-size:13px;font-weight:700;color:var(--accent)">${total} tasks</span>
+        <span style="font-size:12px;font-weight:600;padding:3px 10px;border-radius:6px;background:${perf>=80?'rgba(5,150,105,0.1)':perf>=50?'rgba(245,158,11,0.1)':'rgba(220,38,38,0.09)'};color:${perf>=80?'var(--success)':perf>=50?'var(--amber)':'var(--danger)'}">${perf}%</span>
+      </div>
+      <div class="wt-list">${rows||'<span style="color:var(--text3);font-size:13px">All fields zero</span>'}</div>
+    `;
+  }
+
+  // Render toggle buttons
+  wrap.innerHTML = '';
+  days.forEach(day=>{
+    const btn = document.createElement('button');
+    btn.className = 'day-tog';
+    btn.dataset.ds = day.ds;
+    const label = day.dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    btn.textContent = label;
+    btn.style.cssText = 'padding:5px 11px;border-radius:7px;border:1px solid rgba(79,70,229,0.25);font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s;background:rgba(79,70,229,0.08);color:#4f46e5;';
+    btn.addEventListener('click', ()=>renderDayPanel(day.ds));
+    wrap.appendChild(btn);
+  });
+
+  // Show today by default
+  if(days.length) renderDayPanel(activeDay);
 }
 
 function drawCharts(emp, subs, todayE, tgt) {
