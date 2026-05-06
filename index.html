@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EtailLabs — Employee Work Tracker v6</title>
+<title>EtailLabs — Employee Work Tracker v7</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -75,13 +75,16 @@ nav {
 }
 .nav-logo-img { height:36px; width:auto; object-fit:contain; }
 .nav-logo-upload {
+  display:none; /* hidden by default — admin unlocks via password */
+}
+.nav-logo-upload.admin-unlocked {
   display:inline-flex; align-items:center; gap:5px;
   font-size:11px; font-weight:500; color:var(--text2);
   background:var(--surface2); border:1px dashed var(--border2);
   padding:4px 10px; border-radius:7px; cursor:pointer;
   transition:all .2s; white-space:nowrap;
 }
-.nav-logo-upload:hover { border-color:var(--accent); color:var(--accent); }
+.nav-logo-upload.admin-unlocked:hover { border-color:var(--accent); color:var(--accent); }
 #logoFileInput { display:none; }
 .brand-name {
   font-size:18px; font-weight:700; color:var(--accent-dark);
@@ -379,7 +382,7 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 }
 .r-hero-left { display:flex; flex-direction:column; align-items:center; gap:8px; text-align:center; }
 .r-hero-photo {
-  width:160px; height:190px; border-radius:10px; overflow:hidden;
+  width:120px; height:150px; border-radius:10px; overflow:hidden;
   border:3px solid rgba(79,70,229,0.22); box-shadow:var(--shadow-lg);
   background:var(--surface2);
 }
@@ -458,6 +461,64 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 }
 .wt-name { font-size:12px; font-weight:500; color:var(--text2); }
 .wt-count { font-size:13px; font-weight:700; color:var(--accent); }
+
+/* Field-wise table view */
+.fw-table { width:100%; border-collapse:collapse; font-size:12px; }
+.fw-table th { background:var(--accent); color:#fff; padding:8px 12px; text-align:left; font-weight:600; }
+.fw-table td { padding:7px 12px; border-bottom:1px solid var(--border); }
+.fw-table tr:hover td { background:var(--surface2); }
+.fw-table .fw-count { font-weight:700; color:var(--accent); }
+.fw-table .fw-tgt   { color:var(--text3); }
+.fw-perf-bar { height:6px; border-radius:3px; background:var(--border); margin-top:3px; overflow:hidden; }
+.fw-perf-fill { height:100%; border-radius:3px; transition:width .4s; }
+
+/* ET Calendar */
+.et-cal-wrap {
+  background:linear-gradient(135deg,#f0f4ff,#fff);
+  border:1px solid rgba(79,70,229,0.15); border-radius:16px;
+  padding:18px; box-shadow:var(--shadow);
+}
+.et-cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
+.et-cal-title { font-size:15px; font-weight:700; color:var(--accent); }
+.et-cal-cycle { font-size:11px; color:var(--text3); font-weight:500; }
+.et-cal-table { width:100%; border-collapse:separate; border-spacing:3px; }
+.et-cal-table thead th { font-size:10px; font-weight:700; text-align:center; color:var(--text3); padding:4px 0; }
+.cal-cell {
+  width:36px; height:44px; text-align:center; border-radius:8px;
+  cursor:default; transition:transform .15s;
+  font-size:11px; font-weight:600;
+  vertical-align:middle; position:relative;
+}
+.cal-cell:hover { transform:scale(1.12); z-index:1; }
+.cal-cell.present { background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#065f46; box-shadow:0 2px 6px rgba(16,185,129,0.2); }
+.cal-cell.absent  { background:linear-gradient(135deg,#fee2e2,#fecaca); color:#991b1b; box-shadow:0 2px 6px rgba(239,68,68,0.15); }
+.cal-cell.holiday { background:linear-gradient(135deg,#fef9c3,#fde68a); color:#78350f; box-shadow:0 2px 6px rgba(245,158,11,0.15); }
+.cal-cell.future  { background:rgba(99,102,145,0.06); color:var(--text3); }
+.cal-cell.out     { background:transparent; }
+.cal-day-num { display:block; font-size:12px; font-weight:700; line-height:1.2; }
+.cal-day-em  { display:block; font-size:14px; line-height:1; }
+.et-cal-legend { display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
+.et-leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); font-weight:500; }
+.et-dot { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.present-dot { background:#10b981; }
+.absent-dot  { background:#ef4444; }
+.holiday-dot { background:#f59e0b; }
+.et-cal-stats { display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
+.et-stat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; text-align:center; flex:1; min-width:70px; }
+.et-stat-lbl { display:block; font-size:10px; color:var(--text3); font-weight:500; margin-bottom:2px; }
+.et-stat-val { display:block; font-size:16px; font-weight:800; color:var(--text); }
+.et-cal-lop-warn { margin-top:10px; padding:8px 12px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); border-radius:8px; font-size:12px; color:var(--danger); font-weight:500; }
+
+/* PDF download button */
+.btn-pdf {
+  display:inline-flex; align-items:center; gap:7px;
+  padding:10px 22px; border-radius:10px;
+  background:linear-gradient(135deg,#dc2626,#ef4444);
+  color:#fff; font-size:13px; font-weight:600;
+  border:none; cursor:pointer; font-family:'Poppins',sans-serif;
+  box-shadow:0 4px 14px rgba(220,38,38,0.3); transition:all .2s;
+}
+.btn-pdf:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(220,38,38,0.35); }
 
 /* Month table */
 .m-table { width:100%; border-collapse:collapse; }
@@ -797,34 +858,39 @@ const CSV2 = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vQIln1JEWS-Asi5jP_
 
 const SYNC_INTERVAL = 3 * 60 * 1000; // 3 minutes
 
-// Field definitions: key | inputId | targetId | label | col-index in Sheet1
+// Field definitions matching Excel exactly (0-indexed col, Row3+ is data, Row1+2 are headers)
+// A=0Name B=1ID C=2DOJ D=3Desig E=4FeedsProd F=5PLPProd G=6CloneProd H=7QSGProd I=8PriceMon
+// J=9FeedsContent K=10PLPContent L=11FeedsGfx M=12PLPGfx N=13ImgColl
+// O=14QCFeeds P=15QCPLP Q=16QCContent R=17QCQSG S=18PriceMonQC
+// T=19FeedsUpload U=20PLPUpload V=21CloneUpload W=22FilesDelivered X=23QSGDelivered
+// Y=24MetaTitle Z=25MetaLong AA=26MetaQC AB=27MetaHTML AC=28Decann AD=29Landmark AE=30Others AF=31Image
 const FIELDS = [
-  {key:'feeds_prod',      inp:'f_feeds_prod',      tgt:'t_feeds_prod',      lbl:'Feeds Production',         col:4,  type:'number'},
-  {key:'feeds_content',   inp:'f_feeds_content',   tgt:'t_feeds_content',   lbl:'Feeds Content',            col:5,  type:'number'},
-  {key:'plp_prod',        inp:'f_plp_prod',        tgt:'t_plp_prod',        lbl:'PLP Production',           col:6,  type:'number'},
-  {key:'plp_content',     inp:'f_plp_content',     tgt:'t_plp_content',     lbl:'PLP Content',              col:7,  type:'number'},
-  {key:'feeds_graphics',  inp:'f_feeds_graphics',  tgt:'t_feeds_graphics',  lbl:'Feeds Graphics',           col:8,  type:'number'},
-  {key:'plp_graphics',    inp:'f_plp_graphics',    tgt:'t_plp_graphics',    lbl:'PLP Graphics',             col:9,  type:'number'},
-  {key:'qc_feeds',        inp:'f_qc_feeds',        tgt:'t_qc_feeds',        lbl:'QC Feeds',                 col:10, type:'number'},
-  {key:'qc_plp',          inp:'f_qc_plp',          tgt:'t_qc_plp',          lbl:'QC PLP',                   col:11, type:'number'},
-  {key:'qc_qsg',          inp:'f_qc_qsg',          tgt:'t_qc_qsg',          lbl:'QC QSG',                   col:12, type:'number'},
-  {key:'upload',          inp:'f_upload',          tgt:'t_upload',          lbl:'Feeds/PLP Upload',          col:13, type:'number'},
-  {key:'qsg_prod',        inp:'f_qsg_prod',        tgt:'t_qsg_prod',        lbl:'QSG Production',           col:14, type:'text'},
-  {key:'price_mon',       inp:'f_price_mon',       tgt:'t_price_mon',       lbl:'Price Monitoring',         col:15, type:'number'},
-  {key:'price_mon_qc',    inp:'f_price_mon_qc',    tgt:'t_price_mon_qc',    lbl:'Price Monitoring QC',      col:22, type:'number'},
-  {key:'meta_title',      inp:'f_meta_title',      tgt:'t_meta_title',      lbl:'Meta Title & Desc',        col:16, type:'number'},
-  {key:'meta_long',       inp:'f_meta_long',       tgt:'t_meta_long',       lbl:'Meta Longform',            col:17, type:'number'},
-  {key:'meta_qc',         inp:'f_meta_qc',         tgt:'t_meta_qc',         lbl:'Meta QC',                  col:18, type:'number'},
-  {key:'meta_html',       inp:'f_meta_html',       tgt:'t_meta_html',       lbl:'Meta Interlinking & HTML', col:19, type:'number'},
-  {key:'decann',          inp:'f_decann',          tgt:'t_decann',          lbl:'Decannibalization',        col:20, type:'number'},
-  {key:'landmark',        inp:'f_landmark',        tgt:'t_landmark',        lbl:'Landmark Production',      col:21, type:'number'},
-  {key:'files_delivered', inp:'f_files_delivered', tgt:'t_files_delivered', lbl:'Feed & PLP Files Delivered',col:23,type:'number'},
-  {key:'qsg_delivered',   inp:'f_qsg_delivered',   tgt:'t_qsg_delivered',   lbl:'QSG Delivered',            col:24, type:'number'},
-  {key:'img_collection',  inp:'f_img_collection',  tgt:'t_img_collection',  lbl:'Image Collection',         col:25, type:'number'},
-  {key:'plp_upload',      inp:'f_plp_upload',      tgt:'t_plp_upload',      lbl:'PLP Upload',               col:26, type:'number'},
-  {key:'feeds_upload',    inp:'f_feeds_upload',    tgt:'t_feeds_upload',    lbl:'Feeds Upload',             col:27, type:'number'},
-  {key:'clone_upload',    inp:'f_clone_upload',    tgt:'t_clone_upload',    lbl:'Clone Upload',             col:28, type:'number'},
-  {key:'clone_prod',      inp:'f_clone_prod',      tgt:'t_clone_prod',      lbl:'Clone Production',         col:29, type:'number'},
+  {key:'feeds_prod',      inp:'f_feeds_prod',      tgt:'t_feeds_prod',      lbl:'Feeds Production',          col:4,  type:'number'},
+  {key:'plp_prod',        inp:'f_plp_prod',        tgt:'t_plp_prod',        lbl:'PLP Production',            col:5,  type:'number'},
+  {key:'clone_prod',      inp:'f_clone_prod',      tgt:'t_clone_prod',      lbl:'Clone Production',          col:6,  type:'number'},
+  {key:'qsg_prod',        inp:'f_qsg_prod',        tgt:'t_qsg_prod',        lbl:'QSG Production',            col:7,  type:'text'},
+  {key:'price_mon',       inp:'f_price_mon',       tgt:'t_price_mon',       lbl:'Price Monitoring',          col:8,  type:'number'},
+  {key:'feeds_content',   inp:'f_feeds_content',   tgt:'t_feeds_content',   lbl:'Feeds Content Production',  col:9,  type:'number'},
+  {key:'plp_content',     inp:'f_plp_content',     tgt:'t_plp_content',     lbl:'PLP Content Production',    col:10, type:'number'},
+  {key:'feeds_graphics',  inp:'f_feeds_graphics',  tgt:'t_feeds_graphics',  lbl:'Feeds Graphics',            col:11, type:'number'},
+  {key:'plp_graphics',    inp:'f_plp_graphics',    tgt:'t_plp_graphics',    lbl:'PLP Graphics',              col:12, type:'number'},
+  {key:'img_collection',  inp:'f_img_collection',  tgt:'t_img_collection',  lbl:'Image Collection',          col:13, type:'number'},
+  {key:'qc_feeds',        inp:'f_qc_feeds',        tgt:'t_qc_feeds',        lbl:'QC — Feeds',                col:14, type:'number'},
+  {key:'qc_plp',          inp:'f_qc_plp',          tgt:'t_qc_plp',          lbl:'QC — PLP',                  col:15, type:'number'},
+  {key:'qc_content',      inp:'f_qc_content',      tgt:'t_qc_content',      lbl:'QC — Content',              col:16, type:'number'},
+  {key:'qc_qsg',          inp:'f_qc_qsg',          tgt:'t_qc_qsg',          lbl:'QC — QSG',                  col:17, type:'number'},
+  {key:'price_mon_qc',    inp:'f_price_mon_qc',    tgt:'t_price_mon_qc',    lbl:'Price Monitoring QC',       col:18, type:'number'},
+  {key:'feeds_upload',    inp:'f_feeds_upload',    tgt:'t_feeds_upload',    lbl:'Feeds Upload',              col:19, type:'number'},
+  {key:'plp_upload',      inp:'f_plp_upload',      tgt:'t_plp_upload',      lbl:'PLP Upload',                col:20, type:'number'},
+  {key:'clone_upload',    inp:'f_clone_upload',    tgt:'t_clone_upload',    lbl:'Clone Upload',              col:21, type:'number'},
+  {key:'files_delivered', inp:'f_files_delivered', tgt:'t_files_delivered', lbl:'Feed & PLP Files Delivered',col:22, type:'number'},
+  {key:'qsg_delivered',   inp:'f_qsg_delivered',   tgt:'t_qsg_delivered',   lbl:'QSG Delivered',             col:23, type:'number'},
+  {key:'meta_title',      inp:'f_meta_title',      tgt:'t_meta_title',      lbl:'Meta Title & Desc',         col:24, type:'number'},
+  {key:'meta_long',       inp:'f_meta_long',       tgt:'t_meta_long',       lbl:'Meta Longform',             col:25, type:'number'},
+  {key:'meta_qc',         inp:'f_meta_qc',         tgt:'t_meta_qc',         lbl:'Meta QC',                   col:26, type:'number'},
+  {key:'meta_html',       inp:'f_meta_html',       tgt:'t_meta_html',       lbl:'Meta Interlinking & HTML',  col:27, type:'number'},
+  {key:'decann',          inp:'f_decann',          tgt:'t_decann',          lbl:'Decannibalization',         col:28, type:'number'},
+  {key:'landmark',        inp:'f_landmark',        tgt:'t_landmark',        lbl:'Landmark Production',       col:29, type:'number'},
 ];
 
 // ═══════════════════════════════════════════════
@@ -943,6 +1009,7 @@ function parseCSV(line) {
 
 function parseEmployees(csv) {
   const lines = csv.split('\n').map(l=>l.trim()).filter(Boolean);
+  // Sheet1 has 2 header rows (group names + field names), data starts at row index 2
   if(lines.length < 3) { loadFallback(); return; }
   const newList = [];
   for(let i=2; i<lines.length; i++){
@@ -953,12 +1020,12 @@ function parseEmployees(csv) {
       id:       c[1]||'',
       doj:      c[2]||'',
       desig:    c[3]||'',
-      imageUrl: (c[23]||'').trim(),   // column X (0-indexed = 23)
+      imageUrl: (c[31]||'').trim(),   // AF=31 (0-indexed)
       targets:  {}
     };
-    console.log(`[emp] ${emp.name} | cols total: ${c.length} | imageUrl: "${emp.imageUrl}"`);
+    console.log('[emp]', emp.name, '| cols:', c.length, '| img:', emp.imageUrl.slice(0,40));
     FIELDS.forEach(f => { emp.targets[f.key] = parseFloat(c[f.col])||0; });
-    if(emp.name) newList.push(emp);
+    if(emp.name && emp.id) newList.push(emp);
   }
   if(newList.length) {
     // Handle removed employees: keep them in an archive but don't show in dropdown
@@ -1110,14 +1177,14 @@ function renderEntryProfile(emp) {
 function loadTargets(emp) {
   FIELDS.forEach(f => {
     const t = document.getElementById(f.tgt);
-    if(t) t.textContent = emp.targets[f.key]||'—';
+    if(t) t.textContent = f.type==='text' ? '—' : (emp.targets[f.key]||'—');
     const inp = document.getElementById(f.inp);
     if(inp) inp.value = '';
   });
-  const qsgText = document.getElementById('f_qc_qsg_text');
   const others  = document.getElementById('f_others');
-  if(qsgText) qsgText.value = '';
+  const comment = document.getElementById('f_comment');
   if(others)  others.value  = '';
+  if(comment) comment.value = '';
 }
 
 // ═══════════════════════════════════════════════
@@ -1127,12 +1194,17 @@ function submitEntry() {
   if(!currentEmp) return;
 
   const entry = {
-    date: todayStr,
-    fields: {},
-    qsg_text: document.getElementById('f_qc_qsg_text').value||'',
-    others:   document.getElementById('f_others').value||''
+    date:    todayStr,
+    fields:  {},
+    others:  document.getElementById('f_others')?.value||'',
+    comment: document.getElementById('f_comment')?.value||''
   };
-  FIELDS.forEach(f => { entry.fields[f.key] = parseFloat(document.getElementById(f.inp).value)||0; });
+  FIELDS.forEach(f => {
+    const el = document.getElementById(f.inp);
+    if(!el) return;
+    if(f.type === 'text') { entry.fields[f.key] = el.value||''; }
+    else { entry.fields[f.key] = parseFloat(el.value)||0; }
+  });
 
   // Save in-memory
   if(!submissions[currentEmp.id]) submissions[currentEmp.id]=[];
@@ -1169,7 +1241,7 @@ async function pushToSheet(emp, entry) {
     await fetch(url, {
       method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({empId:emp.id, empName:emp.name, date:entry.date, fields:entry.fields, qsg_text:entry.qsg_text, others:entry.others})
+      body: JSON.stringify({empId:emp.id, empName:emp.name, date:entry.date, fields:entry.fields, others:entry.others, comment:entry.comment})
     });
     showToast('✓ Submitted to Google Sheet', 'ok');
   } catch(e){
@@ -1216,18 +1288,32 @@ function switchTab(tab) {
 // SETTINGS MODAL
 // ═══════════════════════════════════════════════
 function openSettings() {
+  const pw = prompt('Enter admin password to access Settings:');
+  if(pw !== ADMIN_PASS) {
+    if(pw !== null) showToast('❌ Incorrect password', 'err');
+    return;
+  }
   const url = getWebAppUrl();
   const inp = document.getElementById('settingsUrl');
   inp.value = url;
   const status = document.getElementById('settingsUrlStatus');
   status.textContent = url ? '✓ URL is configured' : '⚠ No URL saved yet';
   status.style.color  = url ? 'var(--success)' : 'var(--warn)';
+  // Also unlock logo upload
+  const logoBtn = document.querySelector('.nav-logo-upload');
+  if(logoBtn) logoBtn.classList.add('admin-unlocked');
   document.getElementById('settingsOverlay').classList.add('show');
   setTimeout(()=>inp.focus(), 120);
 }
-function closeSettings() {
+function closeSettingsAndLock() {
   document.getElementById('settingsOverlay').classList.remove('show');
+  // Re-lock logo after 30s
+  setTimeout(()=>{
+    const logoBtn = document.querySelector('.nav-logo-upload');
+    if(logoBtn) logoBtn.classList.remove('admin-unlocked');
+  }, 30000);
 }
+function closeSettings() { closeSettingsAndLock(); }
 function saveSettings() {
   const url = document.getElementById('settingsUrl').value.trim();
   if(url && !url.startsWith('https://script.google.com/')) {
@@ -1262,11 +1348,20 @@ function doReset() {
     return;
   }
   if(currentEmp) {
-    // Remove from memory
+    // Remove from in-memory
     if(submissions[currentEmp.id])
       submissions[currentEmp.id] = submissions[currentEmp.id].filter(e=>e.date!==todayStr);
     // Remove from localStorage
     removeLocalEntry(currentEmp.id, todayStr);
+    // Delete from Google Sheet via Apps Script
+    const url = getWebAppUrl();
+    if(url) {
+      fetch(url, {
+        method:'POST', mode:'no-cors',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({action:'delete', empId:currentEmp.id, date:todayStr})
+      }).catch(()=>{});
+    }
   }
   closeAdminModal();
   document.getElementById('submittedMsg').classList.remove('show');
@@ -1308,15 +1403,15 @@ function renderCards() {
   const grid=document.getElementById('empCardsGrid');
   if(!employees.length){grid.innerHTML='<p style="color:var(--text2);padding:20px">Loading…</p>';return;}
   grid.innerHTML='';
+  const {cycleStart,cycleEnd}=getETCycle();
   employees.forEach((emp)=>{
-    const att=getAttMonth(emp.id);
+    const cycleAtt=getCycleAttendance(emp.id,cycleStart,cycleEnd);
     const photoHtml = emp.imageUrl
-      ? `<div class="card-photo"><img src="${emp.imageUrl}" onerror="this.parentElement.innerHTML='<div class=card-photo-ph>${emp.name[0]}</div>'"></div>`
+      ? `<div class="card-photo"><img src="${emp.imageUrl}" onerror="this.parentElement.innerHTML=\'<div class=card-photo-ph>\'+emp.name[0]+\'</div>\'"></div>`
       : `<div class="card-photo"><div class="card-photo-ph">${emp.name[0]}</div></div>`;
-
     const card=document.createElement('div');
     card.className='emp-card';
-    card.dataset.empid = emp.id;
+    card.dataset.empid=emp.id;
     card.innerHTML=`
       ${photoHtml}
       <div class="card-name">${emp.name}</div>
@@ -1325,17 +1420,168 @@ function renderCards() {
       <div class="card-doj">Joined: ${emp.doj}</div>
       <div class="att-dots">${getLast7(emp.id)}</div>
       <div class="card-att-text">
-        Attendance: <b style="color:var(--success)">${att.present}P</b> / <b style="color:var(--danger)">${att.absent}A</b> this month
+        <b style="color:var(--success)">${cycleAtt.present}P</b> /
+        <b style="color:var(--danger)">${cycleAtt.absent}A</b> /
+        <b style="color:var(--warn)">${cycleAtt.lop} LOP</b> this cycle
       </div>
       <button class="btn-full-report" data-empid="${emp.id}">📈 See Full Report</button>
     `;
-    // Attach event listener directly — avoids inline onclick scope issues
-    card.querySelector('.btn-full-report').addEventListener('click', function(e) {
+    card.querySelector('.btn-full-report').addEventListener('click',function(e){
       e.stopPropagation();
       openReport(this.dataset.empid);
     });
     grid.appendChild(card);
   });
+}
+
+// ═══════════════════════════════════════════════
+// TAMIL NADU GOVERNMENT HOLIDAYS 2025-2026
+// ═══════════════════════════════════════════════
+const TN_HOLIDAYS = new Set([
+  // 2025
+  '2025-01-01','2025-01-14','2025-01-15','2025-01-26',
+  '2025-02-26','2025-03-14','2025-03-31',
+  '2025-04-10','2025-04-14','2025-04-18',
+  '2025-05-01',
+  '2025-06-06',
+  '2025-07-07',
+  '2025-08-15','2025-08-27',
+  '2025-09-05','2025-09-08',
+  '2025-10-02','2025-10-02','2025-10-20','2025-10-21',
+  '2025-11-01','2025-11-05',
+  '2025-12-25',
+  // 2026
+  '2026-01-01','2026-01-14','2026-01-15','2026-01-26',
+  '2026-02-17',
+  '2026-03-03','2026-03-20',
+  '2026-04-02','2026-04-14','2026-04-15',
+  '2026-05-01',
+  '2026-06-24',
+  '2026-08-15',
+  '2026-09-17','2026-09-28',
+  '2026-10-02','2026-10-09','2026-10-20',
+  '2026-11-01','2026-11-14',
+  '2026-12-25',
+]);
+
+function isHoliday(dateStr) {
+  const d = new Date(dateStr);
+  const dow = d.getDay();
+  if(dow === 0 || dow === 6) return true; // weekend
+  if(TN_HOLIDAYS.has(dateStr)) return true;
+  return false;
+}
+
+// ET Attendance Cycle: 25th prev month to 24th current month
+function getETCycle(refDate) {
+  const d = refDate || new Date();
+  const yr = d.getFullYear(), mo = d.getMonth();
+  let cycleStart, cycleEnd;
+  if(d.getDate() >= 25) {
+    // current cycle: 25th this month to 24th next month
+    cycleStart = new Date(yr, mo, 25);
+    cycleEnd   = new Date(yr, mo+1, 24);
+  } else {
+    // current cycle: 25th last month to 24th this month
+    cycleStart = new Date(yr, mo-1, 25);
+    cycleEnd   = new Date(yr, mo, 24);
+  }
+  return {cycleStart, cycleEnd};
+}
+
+function getCycleAttendance(empId, cycleStart, cycleEnd) {
+  const subs = submissions[empId]||[];
+  const subSet = new Set(subs.map(s=>s.date));
+  const now = new Date();
+  let present=0, absent=0, holidays=0, workdays=0;
+  const days = [];
+  for(let d=new Date(cycleStart); d<=cycleEnd && d<=now; d.setDate(d.getDate()+1)){
+    const ds = d.toISOString().split('T')[0];
+    const isHol = isHoliday(ds);
+    if(isHol){ holidays++; days.push({ds, status:'holiday'}); continue; }
+    workdays++;
+    if(subSet.has(ds)){ present++; days.push({ds, status:'present'}); }
+    else { absent++; days.push({ds, status:'absent'}); }
+  }
+  // Future days in cycle
+  for(let d=new Date(Math.min(now.getTime()+86400000, cycleEnd.getTime()+1)); d<=cycleEnd; d.setDate(d.getDate()+1)){
+    const ds = d.toISOString().split('T')[0];
+    days.push({ds, status: isHoliday(ds)?'holiday':'future'});
+  }
+  const lop = Math.max(0, absent - 2);
+  const paid = Math.min(2, absent);
+  return {present, absent, holidays, workdays, lop, paid, days};
+}
+
+// ═══════════════════════════════════════════════
+// ET CALENDAR HTML BUILDER
+// ═══════════════════════════════════════════════
+function buildETCalendar(empId) {
+  const {cycleStart, cycleEnd} = getETCycle();
+  const att = getCycleAttendance(empId, cycleStart, cycleEnd);
+  const startLabel = cycleStart.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+  const endLabel   = cycleEnd.toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+
+  const emoji = ['☀️','🌈','⭐','🎯','🚀','💫','🌟','🎉','✨','🏆'];
+  const dayEmoji = {present:'✅', absent:'❌', holiday:'🌴', future:'⬜'};
+  const dayLabel = ['Su','Mo','Tu','We','Th','Fr','Sa'];
+
+  // Build week rows starting from Sunday of cycleStart week
+  const startOfGrid = new Date(cycleStart);
+  startOfGrid.setDate(cycleStart.getDate() - cycleStart.getDay());
+  const endOfGrid = new Date(cycleEnd);
+  endOfGrid.setDate(cycleEnd.getDate() + (6 - cycleEnd.getDay()));
+
+  const attMap = {};
+  att.days.forEach(d => { attMap[d.ds] = d.status; });
+
+  let weeks = [];
+  let week = [];
+  for(let d=new Date(startOfGrid); d<=endOfGrid; d.setDate(d.getDate()+1)){
+    const ds = d.toISOString().split('T')[0];
+    const inCycle = d >= cycleStart && d <= cycleEnd;
+    const status = inCycle ? (attMap[ds]||'future') : 'out';
+    week.push({ds, day:d.getDate(), status, inCycle});
+    if(week.length===7){ weeks.push(week); week=[]; }
+  }
+
+  const weekRows = weeks.map(wk => {
+    const cells = wk.map(day => {
+      if(!day.inCycle) return `<td class="cal-cell out"></td>`;
+      const cls = `cal-cell ${day.status}`;
+      const em = dayEmoji[day.status]||'⬜';
+      return `<td class="${cls}" title="${day.ds}"><span class="cal-day-num">${day.day}</span><span class="cal-day-em">${em}</span></td>`;
+    }).join('');
+    return `<tr>${cells}</tr>`;
+  }).join('');
+
+  const perfPct = att.workdays > 0 ? Math.round((att.present/att.workdays)*100) : 0;
+  const perfColor = perfPct>=90?'#10b981':perfPct>=70?'#f59e0b':'#ef4444';
+
+  return `
+  <div class="et-cal-wrap">
+    <div class="et-cal-header">
+      <div class="et-cal-title">📅 ET Calendar</div>
+      <div class="et-cal-cycle">${startLabel} → ${endLabel}</div>
+    </div>
+    <table class="et-cal-table">
+      <thead><tr>${dayLabel.map(d=>`<th>${d}</th>`).join('')}</tr></thead>
+      <tbody>${weekRows}</tbody>
+    </table>
+    <div class="et-cal-legend">
+      <span class="et-leg"><span class="et-dot present-dot"></span> Present (${att.present})</span>
+      <span class="et-leg"><span class="et-dot absent-dot"></span> Absent (${att.absent})</span>
+      <span class="et-leg"><span class="et-dot holiday-dot"></span> Holiday (${att.holidays})</span>
+    </div>
+    <div class="et-cal-stats">
+      <div class="et-stat"><span class="et-stat-lbl">Work Days</span><span class="et-stat-val">${att.workdays}</span></div>
+      <div class="et-stat"><span class="et-stat-lbl">Present</span><span class="et-stat-val" style="color:#10b981">${att.present}</span></div>
+      <div class="et-stat"><span class="et-stat-lbl">Paid Leave</span><span class="et-stat-val" style="color:#f59e0b">${att.paid}</span></div>
+      <div class="et-stat"><span class="et-stat-lbl">LOP Days</span><span class="et-stat-val" style="color:#ef4444">${att.lop}</span></div>
+      <div class="et-stat"><span class="et-stat-lbl">Attendance %</span><span class="et-stat-val" style="color:${perfColor}">${perfPct}%</span></div>
+    </div>
+    ${att.lop>0?`<div class="et-cal-lop-warn">⚠ ${att.lop} day${att.lop>1?'s':''} LOP — exceeds 2 paid leave limit</div>`:''}
+  </div>`;
 }
 
 // ═══════════════════════════════════════════════
@@ -1375,18 +1621,19 @@ function destroyAllCharts() {
 
 function buildReport(emp) {
   const subs  = submissions[emp.id]||[];
-  const att   = getAttMonth(emp.id);
-  const tgt   = Object.values(emp.targets).reduce((a,b)=>a+b,0);
-  const todayE= subs.find(s=>s.date===todayStr);
-  const todayN= todayE ? Object.values(todayE.fields).reduce((a,b)=>a+b,0) : 0;
-  const perf  = tgt>0 ? Math.round((todayN/tgt)*100) : 0;
-  const attPct= att.total>0 ? Math.round((att.present/att.total)*100) : 0;
+  const {cycleStart, cycleEnd} = getETCycle();
+  const cycleAtt = getCycleAttendance(emp.id, cycleStart, cycleEnd);
+  const attPct = cycleAtt.workdays>0 ? Math.round((cycleAtt.present/cycleAtt.workdays)*100) : 0;
+
+  const tgt    = FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(emp.targets[f.key]||0),0);
+  const todayE = subs.find(s=>s.date===todayStr);
+  const todayN = todayE ? FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(todayE.fields[f.key])||0),0) : 0;
+  const perf   = tgt>0 ? Math.round((todayN/tgt)*100) : 0;
 
   const yest=new Date(today); yest.setDate(today.getDate()-1);
   const yestStr=yest.toISOString().split('T')[0];
   const yestE=subs.find(s=>s.date===yestStr);
-  const yestN=yestE?Object.values(yestE.fields).reduce((a,b)=>a+b,0):0;
-
+  const yestN=yestE?FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(yestE.fields[f.key])||0),0):0;
   const twk=weekTotal(subs,0), lwk=weekTotal(subs,1);
   const tmo=moTotal(subs,0),   lmo=moTotal(subs,1);
 
@@ -1397,20 +1644,46 @@ function buildReport(emp) {
   const dc=(a,b)=>a>b?'up':a<b?'down':'same';
   const dt=(a,b)=>{const d=a-b;return d===0?'= Same':(d>0?'▲+':'▼')+d;};
 
-  // Worked tasks list — only fields with count > 0
-  const workedFields = todayE
-    ? FIELDS.filter(f=>(todayE.fields[f.key]||0)>0)
-    : [];
+  // Worked tasks list
+  const workedFields = todayE ? FIELDS.filter(f=>f.type!=='text'&&(parseFloat(todayE.fields[f.key])||0)>0) : [];
   const workedHtml = workedFields.length
-    ? workedFields.map(f=>`
-        <div class="wt-row">
-          <span class="wt-name">${f.lbl}</span>
-          <span class="wt-count">${todayE.fields[f.key]}</span>
-        </div>`).join('')
+    ? workedFields.map(f=>`<div class="wt-row"><span class="wt-name">${f.lbl}</span><span class="wt-count">${todayE.fields[f.key]}</span></div>`).join('')
     : `<div style="color:var(--text3);font-size:13px;padding:8px 0">No entry for today</div>`;
 
+  // QSG text if any
+  const qsgVal = todayE?.fields?.qsg_prod ? `<div style="margin-top:6px;padding:8px 10px;background:var(--surface2);border-radius:7px;font-size:12px;color:var(--text2)"><b>QSG Production:</b> ${todayE.fields.qsg_prod}</div>` : '';
+
+  // Field-wise table for today
+  const fwRows = FIELDS.filter(f=>f.type!=='text').map(f=>{
+    const actual = todayE ? (parseFloat(todayE.fields[f.key])||0) : 0;
+    const target = emp.targets[f.key]||0;
+    const pct = target>0 ? Math.min(Math.round((actual/target)*100),200) : 0;
+    const barColor = pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
+    return `<tr>
+      <td>${f.lbl}</td>
+      <td class="fw-count">${actual}</td>
+      <td class="fw-tgt">${target}</td>
+      <td style="min-width:100px">
+        <div style="font-size:11px;font-weight:700;color:${barColor}">${pct}%</div>
+        <div class="fw-perf-bar"><div class="fw-perf-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
+      </td>
+    </tr>`;
+  }).join('');
+
+  // Comment/remark of today
+  const commentHtml = todayE?.comment ? `
+    <div class="r-section">
+      <div class="r-section-title">💬 Today's Comment / Remark</div>
+      <div style="padding:12px 16px;background:rgba(79,70,229,0.05);border:1px solid rgba(79,70,229,0.12);border-radius:10px;font-size:13px;color:var(--text2);line-height:1.7">${todayE.comment}</div>
+    </div>` : '';
+
   document.getElementById('reportBody').innerHTML=`
-    <div class="r-hero">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
+      <div></div>
+      <button class="btn-pdf" onclick="downloadPDF('${emp.id}')">📄 Download PDF Report</button>
+    </div>
+
+    <div class="r-hero" id="report-hero-${emp.id}">
       <div class="r-hero-left">
         ${photoHtml}
         <div class="r-hero-name">${emp.name}</div>
@@ -1422,36 +1695,31 @@ function buildReport(emp) {
         <div class="kpi-row">
           <div class="kpi-box"><div class="kpi-lbl">Today's Count</div><div class="kpi-val kv-blue">${todayN}</div></div>
           <div class="kpi-box"><div class="kpi-lbl">Performance</div><div class="kpi-val ${perf>=80?'kv-green':perf>=50?'kv-amber':'kv-red'}">${perf}%</div></div>
-          <div class="kpi-box"><div class="kpi-lbl">Attendance</div><div class="kpi-val ${attPct>=90?'kv-green':attPct>=70?'kv-amber':'kv-red'}">${attPct}%</div></div>
+          <div class="kpi-box"><div class="kpi-lbl">Attendance %</div><div class="kpi-val ${attPct>=90?'kv-green':attPct>=70?'kv-amber':'kv-red'}">${attPct}%</div></div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:4px;">
-          <div>
-            <div class="r-section-title" style="margin-bottom:10px">Today's Worked Tasks</div>
-            <div class="wt-list">${workedHtml}</div>
-          </div>
-          <div>
-            <div class="r-section-title" style="margin-bottom:10px">Today's Performance</div>
-            <div class="chart-wrap" style="height:160px"><canvas id="cvDoughnut"></canvas></div>
-          </div>
+        <div style="margin-top:14px;">
+          <div class="r-section-title" style="margin-bottom:10px">Today's Worked Tasks</div>
+          <div class="wt-list">${workedHtml}</div>
+          ${qsgVal}
         </div>
       </div>
     </div>
 
     <div class="r-section">
-      <div class="r-section-title">Attendance — This Month</div>
-      <div class="att-grid">${buildAttGrid(emp.id)}</div>
+      <div class="r-section-title">📅 ET Calendar — Attendance Cycle</div>
+      ${buildETCalendar(emp.id)}
     </div>
 
     <div class="r-section">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
-        <div class="r-section-title" style="margin-bottom:0">Last 10 Days — Daily Counts</div>
-        <div style="display:flex;gap:6px;" id="dayToggleWrap"></div>
+        <div class="r-section-title" style="margin-bottom:0">📊 Last 10 Days — Daily Counts</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="dayToggleWrap"></div>
       </div>
       <div id="dayDetailPanel"></div>
     </div>
 
     <div class="r-section">
-      <div class="r-section-title">Performance Comparison</div>
+      <div class="r-section-title">📈 Performance Comparison</div>
       <div class="cmp-grid">
         <div class="cmp-card"><div class="cmp-lbl">Yesterday vs Today</div><div class="cmp-vals"><div class="cmp-now">${todayN}</div><div class="cmp-vs">vs</div><div class="cmp-then">${yestN}</div></div><span class="cmp-delta ${dc(todayN,yestN)}">${dt(todayN,yestN)}</span></div>
         <div class="cmp-card"><div class="cmp-lbl">Last Week vs This Week</div><div class="cmp-vals"><div class="cmp-now">${twk}</div><div class="cmp-vs">vs</div><div class="cmp-then">${lwk}</div></div><span class="cmp-delta ${dc(twk,lwk)}">${dt(twk,lwk)}</span></div>
@@ -1460,12 +1728,17 @@ function buildReport(emp) {
     </div>
 
     <div class="r-section">
-      <div class="r-section-title">Field-wise Today's Performance</div>
-      <div class="chart-wrap" style="height:250px"><canvas id="cvBar"></canvas></div>
+      <div class="r-section-title">🎯 Field-wise Today's Performance</div>
+      <table class="fw-table">
+        <thead><tr><th>Field</th><th>Today</th><th>Target</th><th>Achievement</th></tr></thead>
+        <tbody>${fwRows}</tbody>
+      </table>
     </div>
 
+    ${commentHtml}
+
     <div class="r-section">
-      <div class="r-section-title">Monthly Count Report (Last 6 Months)</div>
+      <div class="r-section-title">📋 Monthly Count Report (Last 6 Months)</div>
       <table class="m-table">
         <thead><tr><th>Month</th><th>Work Days</th><th>Total Count</th><th>Avg / Day</th><th>Performance</th></tr></thead>
         <tbody>${buildMonthRows(emp,subs)}</tbody>
@@ -1473,10 +1746,85 @@ function buildReport(emp) {
     </div>
   `;
 
-  // Build last 10 days toggle
   buildDayToggles(emp, subs);
-
   requestAnimationFrame(()=>{ setTimeout(()=>{ drawCharts(emp,subs,todayE,tgt); }, 60); });
+}
+
+// ═══════════════════════════════════════════════
+// PDF DOWNLOAD
+// ═══════════════════════════════════════════════
+async function downloadPDF(empId) {
+  const emp = employees.find(e=>e.id===empId);
+  if(!emp) return;
+  showToast('📄 Preparing PDF…', 'ok');
+
+  // Dynamically load html2canvas + jsPDF if not already loaded
+  if(!window.html2canvas) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  }
+  if(!window.jspdf) {
+    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  }
+
+  const el = document.getElementById('reportBody');
+  if(!el) return;
+
+  try {
+    const canvas = await html2canvas(el, {
+      scale: 2,
+      useCORS: true,
+      backgroundColor: '#f0f2f8',
+      logging: false,
+      allowTaint: true
+    });
+    const imgData = canvas.toDataURL('image/jpeg', 0.92);
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const pageW = pdf.internal.pageSize.getWidth();
+    const pageH = pdf.internal.pageSize.getHeight();
+    const margin = 10;
+    const usableW = pageW - margin*2;
+    const imgH = (canvas.height * usableW) / canvas.width;
+    let y = margin;
+    let remaining = imgH;
+    const firstSlice = pageH - margin*2;
+
+    if(imgH <= firstSlice) {
+      pdf.addImage(imgData,'JPEG',margin,margin,usableW,imgH);
+    } else {
+      // Multi-page: slice the image
+      let srcY = 0;
+      let pageIdx = 0;
+      while(remaining > 0) {
+        const sliceH = Math.min(remaining, firstSlice);
+        const sliceCanvas = document.createElement('canvas');
+        sliceCanvas.width = canvas.width;
+        sliceCanvas.height = Math.round((sliceH/imgH)*canvas.height);
+        const ctx = sliceCanvas.getContext('2d');
+        ctx.drawImage(canvas, 0, srcY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
+        if(pageIdx>0) pdf.addPage();
+        pdf.addImage(sliceCanvas.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,sliceH);
+        srcY += sliceCanvas.height;
+        remaining -= sliceH;
+        pageIdx++;
+      }
+    }
+
+    const fname = `${emp.name.replace(/\s+/g,'_')}_Report_${todayStr}.pdf`;
+    pdf.save(fname);
+    showToast('✅ PDF downloaded!', 'ok');
+  } catch(err) {
+    console.error('PDF error:', err);
+    showToast('⚠ PDF failed: '+err.message, 'err');
+  }
+}
+
+function loadScript(src) {
+  return new Promise((res,rej)=>{
+    const s=document.createElement('script');
+    s.src=src; s.onload=res; s.onerror=rej;
+    document.head.appendChild(s);
+  });
 }
 
 function buildDayToggles(emp, subs) {
