@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EtailLabs — Employee Work Tracker v8</title>
+<title>EtailLabs — Employee Work Tracker v10</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -1638,17 +1638,37 @@ function getAttMonth(empId) {
   return {present,absent,total:present+absent};
 }
 
-function getLast7(empId) {
-  const subs=submissions[empId]||[];
-  let html=''; const now=new Date(); let count=0;
-  for(let d=0;count<7&&d<14;d++){
-    const dt=new Date(now); dt.setDate(now.getDate()-d);
-    if(dt.getDay()===0||dt.getDay()===6) continue;
-    count++;
-    const ds=dt.toISOString().split('T')[0];
-    html+=`<div class="att-dot ${subs.find(s=>s.date===ds)?'present':'absent'}" title="${ds}"></div>`;
+function getThisWeekMonFri() {
+  // Returns Mon-Fri dates of the current week (week starts Monday)
+  const now = new Date();
+  const dow = now.getDay(); // 0=Sun,1=Mon...6=Sat
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - (dow === 0 ? 6 : dow - 1));
+  const days = [];
+  for(let i=0; i<5; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    days.push(toLocalDateStr(d));
   }
-  return html;
+  return days;
+}
+
+function getLast7(empId) {
+  const subs = submissions[empId]||[];
+  const subSet = new Set(subs.map(s=>s.date));
+  const todayLocal = toLocalDateStr(new Date());
+  const days = getThisWeekMonFri();
+  return days.map(ds => {
+    const isPast = ds < todayLocal;
+    const isToday = ds === todayLocal;
+    const submitted = subSet.has(ds);
+    let cls, title;
+    if(submitted) { cls='present'; title='Present: '+ds; }
+    else if(isPast || isToday) { cls='absent'; title='Absent: '+ds; }
+    else { cls='future'; title='Upcoming: '+ds; }
+    const dayName = new Date(ds.replace(/-/g,'/')).toLocaleDateString('en-IN',{weekday:'short'});
+    return `<div class="att-dot ${cls}" title="${dayName} ${ds}"></div>`;
+  }).join('');
 }
 
 function renderCards() {
@@ -1670,7 +1690,7 @@ function renderCards() {
       <div class="card-id">${emp.id}</div>
       <div class="card-desig">${emp.desig}</div>
       <div class="card-doj">Joined: ${emp.doj}</div>
-      <div class="att-dots">${getLast7(emp.id)}</div>
+      <div style="font-size:9px;color:var(--text3);font-weight:600;text-align:center;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.5px">This Week</div><div class="att-dots">${getLast7(emp.id)}</div>
       <div class="card-att-text">
         <b style="color:var(--success)">${cycleAtt.present}P</b> /
         <b style="color:var(--danger)">${cycleAtt.absent}A</b> /
@@ -1941,8 +1961,7 @@ function buildReport(emp) {
     </div>` : '';
 
   document.getElementById('reportBody').innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px;">
-      <div></div>
+    <div class="pdf-btn-row" style="display:flex;justify-content:flex-end;margin-bottom:16px;">
       <button class="btn-pdf" onclick="downloadPDF('${emp.id}')">📄 Download PDF Report</button>
     </div>
 
@@ -2016,30 +2035,56 @@ function buildReport(emp) {
 // ═══════════════════════════════════════════════
 // PDF DOWNLOAD
 // ═══════════════════════════════════════════════
+async function imgToBase64(src) {
+  return new Promise(res => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      const c = document.createElement('canvas');
+      c.width = img.naturalWidth; c.height = img.naturalHeight;
+      c.getContext('2d').drawImage(img, 0, 0);
+      try { res(c.toDataURL('image/jpeg', 0.9)); } catch(e) { res(null); }
+    };
+    img.onerror = () => res(null);
+    img.src = src + (src.includes('?') ? '&' : '?') + '_t=' + Date.now();
+  });
+}
+
 async function downloadPDF(empId) {
   const emp = employees.find(e=>e.id===empId);
   if(!emp) return;
   showToast('📄 Preparing PDF…', 'ok');
 
-  // Dynamically load html2canvas + jsPDF if not already loaded
-  if(!window.html2canvas) {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
-  }
-  if(!window.jspdf) {
-    await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
-  }
+  if(!window.html2canvas) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');
+  if(!window.jspdf) await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
 
   const el = document.getElementById('reportBody');
   if(!el) return;
 
+  // 1. Hide PDF button before capture
+  const pdfBtnWrap = el.querySelector('.pdf-btn-row');
+  if(pdfBtnWrap) pdfBtnWrap.style.display = 'none';
+
+  // 2. Convert all images to base64 to bypass CORS in html2canvas
+  const allImgs = Array.from(el.querySelectorAll('img'));
+  const origSrcs = allImgs.map(i => i.src);
+  await Promise.all(allImgs.map(async (img) => {
+    if(!img.src || img.src.startsWith('data:')) return;
+    const b64 = await imgToBase64(img.src);
+    if(b64) img.src = b64;
+  }));
+
   try {
     const canvas = await html2canvas(el, {
-      scale: 2,
-      useCORS: true,
+      scale: 2, useCORS: true,
       backgroundColor: '#f0f2f8',
-      logging: false,
-      allowTaint: true
+      logging: false, allowTaint: true, imageTimeout: 0
     });
+
+    // Restore images and button
+    allImgs.forEach((img, i) => { img.src = origSrcs[i]; });
+    if(pdfBtnWrap) pdfBtnWrap.style.display = '';
+
     const imgData = canvas.toDataURL('image/jpeg', 0.92);
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
@@ -2048,35 +2093,29 @@ async function downloadPDF(empId) {
     const margin = 10;
     const usableW = pageW - margin*2;
     const imgH = (canvas.height * usableW) / canvas.width;
-    let y = margin;
-    let remaining = imgH;
-    const firstSlice = pageH - margin*2;
+    const sliceH = pageH - margin*2;
 
-    if(imgH <= firstSlice) {
+    if(imgH <= sliceH) {
       pdf.addImage(imgData,'JPEG',margin,margin,usableW,imgH);
     } else {
-      // Multi-page: slice the image
-      let srcY = 0;
-      let pageIdx = 0;
+      let srcY = 0, remaining = imgH, pg = 0;
       while(remaining > 0) {
-        const sliceH = Math.min(remaining, firstSlice);
-        const sliceCanvas = document.createElement('canvas');
-        sliceCanvas.width = canvas.width;
-        sliceCanvas.height = Math.round((sliceH/imgH)*canvas.height);
-        const ctx = sliceCanvas.getContext('2d');
-        ctx.drawImage(canvas, 0, srcY, canvas.width, sliceCanvas.height, 0, 0, canvas.width, sliceCanvas.height);
-        if(pageIdx>0) pdf.addPage();
-        pdf.addImage(sliceCanvas.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,sliceH);
-        srcY += sliceCanvas.height;
-        remaining -= sliceH;
-        pageIdx++;
+        const sh = Math.min(remaining, sliceH);
+        const sc = document.createElement('canvas');
+        sc.width = canvas.width;
+        sc.height = Math.round((sh/imgH)*canvas.height);
+        sc.getContext('2d').drawImage(canvas, 0, srcY, canvas.width, sc.height, 0, 0, canvas.width, sc.height);
+        if(pg>0) pdf.addPage();
+        pdf.addImage(sc.toDataURL('image/jpeg',0.92),'JPEG',margin,margin,usableW,sh);
+        srcY += sc.height; remaining -= sh; pg++;
       }
     }
 
-    const fname = `${emp.name.replace(/\s+/g,'_')}_Report_${todayStr}.pdf`;
-    pdf.save(fname);
+    pdf.save(`${emp.name.replace(/\s+/g,'_')}_Report_${todayStr}.pdf`);
     showToast('✅ PDF downloaded!', 'ok');
   } catch(err) {
+    allImgs.forEach((img, i) => { img.src = origSrcs[i]; });
+    if(pdfBtnWrap) pdfBtnWrap.style.display = '';
     console.error('PDF error:', err);
     showToast('⚠ PDF failed: '+err.message, 'err');
   }
