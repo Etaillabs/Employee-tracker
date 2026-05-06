@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>EtailLabs — Employee Work Tracker v7</title>
+<title>EtailLabs — Employee Work Tracker v8</title>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
@@ -11,10 +11,10 @@
 
 :root {
   /* Rich Slate-Indigo professional palette */
-  --bg:          #f0f2f8;
+  --bg:          #e8f0fe;
   --surface:     #ffffff;
-  --surface2:    #f7f8fc;
-  --card:        rgba(255,255,255,0.96);
+  --surface2:    #f0f4ff;
+  --card:        rgba(255,255,255,0.98);
   --border:      rgba(99,102,145,0.13);
   --border2:     rgba(99,102,145,0.28);
   --accent:      #4f46e5;          /* Indigo */
@@ -252,17 +252,25 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 .qc-grid   { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
 
 .field-card {
-  background:var(--card); border:1px solid var(--border);
-  border-radius:var(--r); padding:13px;
-  box-shadow:var(--shadow-sm); transition:all .2s;
+  background:#ffffff; border:2px solid rgba(79,70,229,0.12);
+  border-radius:12px; padding:14px 15px;
+  box-shadow:0 2px 10px rgba(79,70,229,0.06); transition:all .2s;
+  display:flex; flex-direction:column; gap:6px;
 }
-.field-card:hover { border-color:rgba(79,70,229,0.22); box-shadow:var(--shadow); }
+.field-card:hover { border-color:rgba(79,70,229,0.35); box-shadow:0 4px 18px rgba(79,70,229,0.13); transform:translateY(-1px); }
 .field-card-label {
-  font-size:10px; font-weight:600; color:var(--text2);
-  text-transform:uppercase; letter-spacing:0.04em; margin-bottom:7px;
+  font-size:11px; font-weight:700; color:#3730a3;
+  text-transform:uppercase; letter-spacing:0.5px;
 }
-.target-hint { font-size:10px; color:var(--text3); margin-top:5px; }
-.target-hint b { color:var(--amber); font-weight:600; }
+.field-card input[type=number], .field-card input[type=text] {
+  border:2px solid rgba(99,102,145,0.15); border-radius:8px;
+  padding:9px 12px; font-size:18px; font-weight:800;
+  color:#1e1b4b; background:#f5f7ff; font-family:"Poppins",sans-serif;
+  transition:all .2s; width:100%;
+}
+.field-card input:focus { outline:none; border-color:#4f46e5; background:#fff; box-shadow:0 0 0 3px rgba(79,70,229,0.1); }
+.target-hint { font-size:11px; color:#6366f1; margin-top:2px; font-weight:600; }
+.target-hint b { color:#4f46e5; }
 
 .submit-row { text-align:center; margin-top:28px; }
 .btn-submit {
@@ -474,42 +482,128 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
 /* ET Calendar */
 .et-cal-wrap {
-  background:linear-gradient(135deg,#f0f4ff,#fff);
-  border:1px solid rgba(79,70,229,0.15); border-radius:16px;
-  padding:18px; box-shadow:var(--shadow);
+  background:#fff; border:1px solid rgba(79,70,229,0.12); border-radius:12px;
+  padding:14px; box-shadow:0 2px 10px rgba(79,70,229,0.06);
 }
-.et-cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; }
-.et-cal-title { font-size:15px; font-weight:700; color:var(--accent); }
-.et-cal-cycle { font-size:11px; color:var(--text3); font-weight:500; }
-.et-cal-table { width:100%; border-collapse:separate; border-spacing:3px; }
-.et-cal-table thead th { font-size:10px; font-weight:700; text-align:center; color:var(--text3); padding:4px 0; }
+.et-cal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+.et-cal-title { font-size:13px; font-weight:700; color:var(--accent); }
+.et-cal-cycle { font-size:10px; color:var(--text3); font-weight:500; }
+.et-cal-table { width:100%; border-collapse:separate; border-spacing:2px; }
+.et-cal-table thead th { font-size:9px; font-weight:700; text-align:center; color:var(--text3); padding:3px 0; }
 .cal-cell {
-  width:36px; height:44px; text-align:center; border-radius:8px;
+  width:28px; height:28px; text-align:center; border-radius:5px;
   cursor:default; transition:transform .15s;
-  font-size:11px; font-weight:600;
-  vertical-align:middle; position:relative;
+  font-size:10px; font-weight:700; vertical-align:middle;
 }
-.cal-cell:hover { transform:scale(1.12); z-index:1; }
-.cal-cell.present { background:linear-gradient(135deg,#d1fae5,#a7f3d0); color:#065f46; box-shadow:0 2px 6px rgba(16,185,129,0.2); }
-.cal-cell.absent  { background:linear-gradient(135deg,#fee2e2,#fecaca); color:#991b1b; box-shadow:0 2px 6px rgba(239,68,68,0.15); }
-.cal-cell.holiday { background:linear-gradient(135deg,#fef9c3,#fde68a); color:#78350f; box-shadow:0 2px 6px rgba(245,158,11,0.15); }
+.cal-cell:hover { transform:scale(1.15); z-index:1; }
+.cal-cell.present { background:#d1fae5; color:#065f46; }
+.cal-cell.absent  { background:#fee2e2; color:#991b1b; }
+.cal-cell.holiday { background:#fef9c3; color:#78350f; }
 .cal-cell.future  { background:rgba(99,102,145,0.06); color:var(--text3); }
 .cal-cell.out     { background:transparent; }
-.cal-day-num { display:block; font-size:12px; font-weight:700; line-height:1.2; }
-.cal-day-em  { display:block; font-size:14px; line-height:1; }
-.et-cal-legend { display:flex; gap:14px; margin-top:12px; flex-wrap:wrap; }
-.et-leg { display:flex; align-items:center; gap:5px; font-size:11px; color:var(--text2); font-weight:500; }
-.et-dot { width:10px; height:10px; border-radius:3px; display:inline-block; }
+.cal-day-num { display:block; font-size:10px; font-weight:700; line-height:28px; }
+.cal-day-em  { display:none; }
+.et-cal-legend { display:flex; gap:10px; margin-top:10px; flex-wrap:wrap; }
+.et-leg { display:flex; align-items:center; gap:4px; font-size:10px; color:var(--text2); font-weight:500; }
+.et-dot { width:8px; height:8px; border-radius:2px; display:inline-block; }
 .present-dot { background:#10b981; }
 .absent-dot  { background:#ef4444; }
 .holiday-dot { background:#f59e0b; }
-.et-cal-stats { display:flex; gap:12px; margin-top:14px; flex-wrap:wrap; }
-.et-stat { background:var(--surface2); border:1px solid var(--border); border-radius:8px; padding:8px 14px; text-align:center; flex:1; min-width:70px; }
-.et-stat-lbl { display:block; font-size:10px; color:var(--text3); font-weight:500; margin-bottom:2px; }
-.et-stat-val { display:block; font-size:16px; font-weight:800; color:var(--text); }
-.et-cal-lop-warn { margin-top:10px; padding:8px 12px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); border-radius:8px; font-size:12px; color:var(--danger); font-weight:500; }
+.et-cal-stats { display:flex; gap:8px; margin-top:10px; flex-wrap:wrap; }
+.et-stat { background:var(--surface2); border:1px solid var(--border); border-radius:7px; padding:6px 10px; text-align:center; flex:1; min-width:60px; }
+.et-stat-lbl { display:block; font-size:9px; color:var(--text3); font-weight:500; margin-bottom:1px; }
+.et-stat-val { display:block; font-size:14px; font-weight:800; color:var(--text); }
+.et-cal-lop-warn { margin-top:8px; padding:6px 10px; background:rgba(239,68,68,0.08); border:1px solid rgba(239,68,68,0.22); border-radius:7px; font-size:11px; color:var(--danger); font-weight:500; }
 
-/* PDF download button */
+/* ═══ PERFORMANCE SUMMARY TAB ═══ */
+.perf-wrap { max-width:1200px; margin:0 auto; padding:28px 24px 80px; }
+.perf-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:28px; flex-wrap:wrap; gap:16px; }
+.perf-title { font-size:24px; font-weight:800; color:var(--text); }
+.perf-sub { font-size:13px; color:var(--text2); margin-top:4px; }
+.perf-section-title { font-size:13px; font-weight:700; color:var(--text2); text-transform:uppercase; letter-spacing:1px; margin-bottom:14px; display:flex; align-items:center; gap:8px; }
+
+/* Month toggle */
+.perf-month-toggle { display:flex; gap:6px; flex-wrap:wrap; }
+.pmt-btn { padding:6px 14px; border-radius:8px; border:1px solid var(--border2); background:var(--surface); font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; font-family:'Poppins',sans-serif; transition:all .2s; }
+.pmt-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); box-shadow:0 3px 10px rgba(79,70,229,0.3); }
+
+/* Top 3 */
+.top3-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }
+@media(max-width:768px){ .top3-grid { grid-template-columns:1fr; } }
+
+.top3-card {
+  background:#fff; border-radius:20px; padding:24px 20px;
+  text-align:center; position:relative; overflow:hidden;
+  box-shadow:0 8px 32px rgba(30,27,75,0.10);
+  border:2px solid transparent; transition:transform .2s;
+}
+.top3-card:hover { transform:translateY(-3px); }
+.top3-card.rank-1 { background:linear-gradient(135deg,#fffbeb,#fef3c7); border-color:#f59e0b; }
+.top3-card.rank-2 { background:linear-gradient(135deg,#f8fafc,#f1f5f9); border-color:#94a3b8; }
+.top3-card.rank-3 { background:linear-gradient(135deg,#fff8f5,#fde8d0); border-color:#f97316; }
+.top3-badge { position:absolute; top:14px; right:14px; font-size:28px; }
+.top3-photo { width:72px; height:90px; border-radius:10px; object-fit:cover; margin:0 auto 12px; display:block; border:3px solid rgba(255,255,255,0.8); box-shadow:0 4px 16px rgba(0,0,0,0.12); }
+.top3-photo-ph { width:72px; height:90px; border-radius:10px; background:linear-gradient(135deg,var(--accent),var(--teal)); display:flex; align-items:center; justify-content:center; font-size:28px; font-weight:800; color:#fff; margin:0 auto 12px; }
+.top3-name { font-size:14px; font-weight:700; color:var(--text); margin-bottom:3px; }
+.top3-desig { font-size:11px; color:var(--text2); margin-bottom:12px; }
+.top3-score { font-size:32px; font-weight:900; color:var(--accent); line-height:1; }
+.top3-score-lbl { font-size:10px; color:var(--text3); font-weight:500; margin-top:2px; }
+.top3-stats { display:flex; justify-content:center; gap:12px; margin-top:14px; }
+.top3-stat { text-align:center; }
+.top3-stat-val { font-size:14px; font-weight:700; color:var(--text); display:block; }
+.top3-stat-lbl { font-size:10px; color:var(--text3); }
+
+/* Team KPI row */
+.team-kpi-row { display:grid; grid-template-columns:repeat(5,1fr); gap:14px; }
+@media(max-width:900px){ .team-kpi-row { grid-template-columns:repeat(3,1fr); } }
+.team-kpi-card { background:#fff; border-radius:14px; padding:18px 16px; box-shadow:0 2px 12px rgba(30,27,75,0.07); border-left:4px solid var(--accent); }
+.team-kpi-lbl { font-size:11px; color:var(--text2); font-weight:500; margin-bottom:6px; }
+.team-kpi-val { font-size:26px; font-weight:800; color:var(--text); line-height:1; }
+.team-kpi-sub { font-size:11px; color:var(--text3); margin-top:4px; }
+
+/* Perf view tabs */
+.perf-tabs-row { display:flex; gap:6px; margin-bottom:14px; }
+.perf-tab-btn { padding:7px 18px; border-radius:8px; border:1px solid var(--border2); background:var(--surface); font-size:12px; font-weight:600; color:var(--text2); cursor:pointer; font-family:'Poppins',sans-serif; transition:all .15s; }
+.perf-tab-btn.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+
+/* Performance table */
+.perf-table-wrap { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(30,27,75,0.08); }
+.perf-table { width:100%; border-collapse:collapse; }
+.perf-table th { background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; padding:12px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+.perf-table td { padding:12px 16px; border-bottom:1px solid var(--border); font-size:13px; }
+.perf-table tr:last-child td { border-bottom:none; }
+.perf-table tr:hover td { background:rgba(79,70,229,0.03); }
+.perf-rank { font-weight:800; color:var(--text3); font-size:12px; }
+.perf-emp-cell { display:flex; align-items:center; gap:10px; }
+.perf-mini-photo { width:32px; height:40px; border-radius:5px; object-fit:cover; border:1px solid var(--border); }
+.perf-mini-ph { width:32px; height:40px; border-radius:5px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:14px; font-weight:700; color:var(--accent); }
+.perf-emp-name { font-weight:600; font-size:13px; }
+.perf-emp-desig { font-size:10px; color:var(--text3); }
+.perf-score-bar { height:6px; border-radius:3px; background:var(--border); overflow:hidden; margin-top:3px; min-width:80px; }
+.perf-score-fill { height:100%; border-radius:3px; }
+.perf-badge { display:inline-block; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:700; }
+.badge-excellent { background:#d1fae5; color:#065f46; }
+.badge-good { background:#dbeafe; color:#1e40af; }
+.badge-average { background:#fef9c3; color:#78350f; }
+.badge-low { background:#fee2e2; color:#991b1b; }
+
+/* Heatmap */
+.heatmap-wrap { background:#fff; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(30,27,75,0.08); overflow-x:auto; }
+.heatmap-emp-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
+.heatmap-emp-lbl { font-size:11px; font-weight:600; color:var(--text2); width:110px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.heatmap-cells { display:flex; gap:3px; }
+.hm-cell { width:18px; height:18px; border-radius:3px; flex-shrink:0; cursor:default; transition:transform .1s; position:relative; }
+.hm-cell:hover { transform:scale(1.3); z-index:2; }
+.hm-cell[title] { cursor:help; }
+.hm-0 { background:rgba(99,102,145,0.08); }
+.hm-1 { background:#c7d2fe; }
+.hm-2 { background:#818cf8; }
+.hm-3 { background:#4f46e5; }
+.hm-4 { background:#3730a3; }
+.heatmap-dates { display:flex; gap:3px; margin-left:118px; margin-bottom:6px; }
+.hm-date-lbl { width:18px; font-size:8px; color:var(--text3); text-align:center; flex-shrink:0; }
+
+/* PDF button */
 .btn-pdf {
   display:inline-flex; align-items:center; gap:7px;
   padding:10px 22px; border-radius:10px;
@@ -519,6 +613,7 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
   box-shadow:0 4px 14px rgba(220,38,38,0.3); transition:all .2s;
 }
 .btn-pdf:hover { transform:translateY(-1px); box-shadow:0 6px 20px rgba(220,38,38,0.35); }
+@media print { .btn-pdf { display:none !important; } }
 
 /* Month table */
 .m-table { width:100%; border-collapse:collapse; }
@@ -641,6 +736,7 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
   <div class="nav-tabs">
     <div class="nav-tab active" onclick="switchTab('entry')">📋 Work Entry</div>
     <div class="nav-tab" onclick="switchTab('report')">📊 Reports</div>
+    <div class="nav-tab" onclick="switchTab('summary')">🏆 Performance</div>
   </div>
 
   <div class="nav-right">
@@ -735,10 +831,7 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
       <div class="sec-header"><h2>QSG Production</h2><div class="sec-line"></div></div>
       <div class="fields-grid">
-        <div class="field-card" style="grid-column:span 2">
-          <div class="field-card-label">QSG Production <span style="font-size:10px;color:var(--text3);font-weight:400">(describe tasks, e.g. "Design 1, Layout 2")</span></div>
-          <textarea id="f_qsg_prod" placeholder="e.g. Design 1, Layout 2, Banner 3…" style="min-height:70px"></textarea>
-        </div>
+        <div class="field-card"><div class="field-card-label">QSG Production</div><input type="number" id="f_qsg_prod" min="0" placeholder="0"><div class="target-hint">Target: <b id="t_qsg_prod">—</b>/day</div></div>
       </div>
 
       <div class="sec-header"><h2>Price Monitoring</h2><div class="sec-line"></div></div>
@@ -868,7 +961,7 @@ const FIELDS = [
   {key:'feeds_prod',      inp:'f_feeds_prod',      tgt:'t_feeds_prod',      lbl:'Feeds Production',          col:4,  type:'number'},
   {key:'plp_prod',        inp:'f_plp_prod',        tgt:'t_plp_prod',        lbl:'PLP Production',            col:5,  type:'number'},
   {key:'clone_prod',      inp:'f_clone_prod',      tgt:'t_clone_prod',      lbl:'Clone Production',          col:6,  type:'number'},
-  {key:'qsg_prod',        inp:'f_qsg_prod',        tgt:'t_qsg_prod',        lbl:'QSG Production',            col:7,  type:'text'},
+  {key:'qsg_prod',        inp:'f_qsg_prod',        tgt:'t_qsg_prod',        lbl:'QSG Production',            col:7,  type:'number'},
   {key:'price_mon',       inp:'f_price_mon',       tgt:'t_price_mon',       lbl:'Price Monitoring',          col:8,  type:'number'},
   {key:'feeds_content',   inp:'f_feeds_content',   tgt:'t_feeds_content',   lbl:'Feeds Content Production',  col:9,  type:'number'},
   {key:'plp_content',     inp:'f_plp_content',     tgt:'t_plp_content',     lbl:'PLP Content Production',    col:10, type:'number'},
@@ -896,13 +989,170 @@ const FIELDS = [
 // ═══════════════════════════════════════════════
 // STATE
 // ═══════════════════════════════════════════════
+function toLocalDateStr(d) {
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
 let employees   = [];      // [{name,id,doj,desig,imageUrl,targets:{}}]
 let submissions = {};      // {empId: [{date,fields:{}}]}
 let currentEmp  = null;
 let syncTimer   = null;
 
 const today    = new Date();
-const todayStr = today.toISOString().split('T')[0];
+const todayStr = toLocalDateStr(today);
+
+// ═══════════════════════════════════════════════
+// PERFORMANCE SUMMARY TAB
+// ═══════════════════════════════════════════════
+let perfSelectedMonth = null;
+let perfView = 'month';
+
+function setPerfView(view, btn) {
+  perfView = view;
+  document.querySelectorAll('.perf-tab-btn').forEach(b=>b.classList.remove('active'));
+  if(btn) btn.classList.add('active');
+  renderPerfTable();
+}
+
+function getEmpTotal(empId, fromDate, toDate) {
+  return (submissions[empId]||[])
+    .filter(s=>s.date>=fromDate&&s.date<=toDate)
+    .reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
+}
+
+function getEmpWorkDays(empId, fromDate, toDate) {
+  return (submissions[empId]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate).length;
+}
+
+function getPerfRange() {
+  const now = new Date();
+  const mo = perfSelectedMonth !== null ? perfSelectedMonth : now.getMonth();
+  const yr = now.getFullYear();
+  if(perfView==='day') { const ds=toLocalDateStr(now); return {from:ds,to:ds,label:'Today'}; }
+  if(perfView==='week') {
+    const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
+    return {from:toLocalDateStr(mon),to:toLocalDateStr(now),label:'This Week'};
+  }
+  const from=new Date(yr,mo,1), to=new Date(yr,mo+1,0);
+  return {from:toLocalDateStr(from),to:toLocalDateStr(to),label:from.toLocaleDateString('en-IN',{month:'long',year:'numeric'})};
+}
+
+function getEmpScoreData(emp) {
+  const {from,to}=getPerfRange();
+  const total=getEmpTotal(emp.id,from,to);
+  const workDays=getEmpWorkDays(emp.id,from,to);
+  const tgt=FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(emp.targets[f.key]||0),0);
+  const expectedTotal=tgt*(workDays||1);
+  const perf=expectedTotal>0?Math.min(Math.round((total/expectedTotal)*100),200):0;
+  const avgPerDay=workDays>0?Math.round(total/workDays):0;
+  const {cycleStart,cycleEnd}=getETCycle();
+  const att=getCycleAttendance(emp.id,cycleStart,cycleEnd);
+  const attPct=att.workdays>0?Math.round((att.present/att.workdays)*100):0;
+  return {total,workDays,perf,avgPerDay,attPct,tgt};
+}
+
+function buildPerfMonthToggle() {
+  const wrap=document.getElementById('perfMonthToggle'); if(!wrap) return;
+  const now=new Date(); wrap.innerHTML='';
+  for(let i=5;i>=0;i--) {
+    const d=new Date(now.getFullYear(),now.getMonth()-i,1);
+    const mo=d.getMonth();
+    const btn=document.createElement('button');
+    btn.className='pmt-btn'+(i===0?' active':'');
+    btn.textContent=d.toLocaleDateString('en-IN',{month:'short',year:'2-digit'});
+    btn.onclick=()=>{
+      perfSelectedMonth=mo;
+      document.querySelectorAll('.pmt-btn').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active'); renderPerfSummary();
+    };
+    wrap.appendChild(btn);
+  }
+}
+
+function renderPerfSummary() {
+  buildPerfMonthToggle(); renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
+}
+
+function renderTop3() {
+  const grid=document.getElementById('top3Grid'); if(!grid) return;
+  const scored=employees.map(emp=>({emp,...getEmpScoreData(emp)})).sort((a,b)=>b.perf-a.perf).slice(0,3);
+  const badges=['🥇','🥈','🥉'], rankClass=['rank-1','rank-2','rank-3'];
+  grid.innerHTML=scored.map((s,i)=>{
+    const ph=s.emp.imageUrl
+      ?`<img class="top3-photo" src="${s.emp.imageUrl}" onerror="this.outerHTML='<div class=top3-photo-ph>${s.emp.name[0]}</div>'">`
+      :`<div class="top3-photo-ph">${s.emp.name[0]}</div>`;
+    return `<div class="top3-card ${rankClass[i]}">
+      <div class="top3-badge">${badges[i]}</div>${ph}
+      <div class="top3-name">${s.emp.name}</div>
+      <div class="top3-desig">${s.emp.desig}</div>
+      <div class="top3-score">${s.perf}%</div>
+      <div class="top3-score-lbl">Performance Score</div>
+      <div class="top3-stats">
+        <div class="top3-stat"><span class="top3-stat-val">${s.total}</span><span class="top3-stat-lbl">Tasks</span></div>
+        <div class="top3-stat"><span class="top3-stat-val">${s.avgPerDay}</span><span class="top3-stat-lbl">Avg/Day</span></div>
+        <div class="top3-stat"><span class="top3-stat-val">${s.attPct}%</span><span class="top3-stat-lbl">Att.</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderTeamKPI() {
+  const row=document.getElementById('teamKpiRow'); if(!row) return;
+  const {from,to}=getPerfRange();
+  const totals=employees.map(e=>getEmpTotal(e.id,from,to));
+  const perfs=employees.map(e=>getEmpScoreData(e).perf);
+  const teamTotal=totals.reduce((a,b)=>a+b,0);
+  const avgPerf=perfs.length?Math.round(perfs.reduce((a,b)=>a+b,0)/perfs.length):0;
+  const topEmp=employees[totals.indexOf(Math.max(...totals,0))];
+  const activeCount=totals.filter(t=>t>0).length;
+  const {cycleStart,cycleEnd}=getETCycle();
+  const avgAtt=employees.length?Math.round(employees.map(e=>getCycleAttendance(e.id,cycleStart,cycleEnd).present).reduce((a,b)=>a+b,0)/employees.length):0;
+  row.innerHTML=`
+    <div class="team-kpi-card" style="border-left-color:#4f46e5"><div class="team-kpi-lbl">Team Total Tasks</div><div class="team-kpi-val">${teamTotal.toLocaleString()}</div><div class="team-kpi-sub">All employees</div></div>
+    <div class="team-kpi-card" style="border-left-color:#10b981"><div class="team-kpi-lbl">Avg Performance</div><div class="team-kpi-val">${avgPerf}%</div><div class="team-kpi-sub">vs target</div></div>
+    <div class="team-kpi-card" style="border-left-color:#f59e0b"><div class="team-kpi-lbl">Top Performer</div><div class="team-kpi-val" style="font-size:16px">${topEmp?.name.split(' ')[0]||'—'}</div><div class="team-kpi-sub">${Math.max(...totals,0)} tasks</div></div>
+    <div class="team-kpi-card" style="border-left-color:#0ea5e9"><div class="team-kpi-lbl">Active Members</div><div class="team-kpi-val">${activeCount}/${employees.length}</div><div class="team-kpi-sub">submitted data</div></div>
+    <div class="team-kpi-card" style="border-left-color:#8b5cf6"><div class="team-kpi-lbl">Avg Attendance</div><div class="team-kpi-val">${avgAtt}</div><div class="team-kpi-sub">days present this cycle</div></div>`;
+}
+
+function renderPerfTable() {
+  const wrap=document.getElementById('perfTableWrap'); if(!wrap) return;
+  const {from,to,label}=getPerfRange();
+  const scored=employees.map(emp=>({emp,...getEmpScoreData(emp)})).sort((a,b)=>b.perf-a.perf);
+  const badge=p=>p>=90?'<span class="perf-badge badge-excellent">Excellent</span>':p>=70?'<span class="perf-badge badge-good">Good</span>':p>=50?'<span class="perf-badge badge-average">Average</span>':'<span class="perf-badge badge-low">Needs Attention</span>';
+  const rows=scored.map((s,i)=>{
+    const ph=s.emp.imageUrl?`<img class="perf-mini-photo" src="${s.emp.imageUrl}" onerror="this.outerHTML='<div class=perf-mini-ph>${s.emp.name[0]}</div>'">`:`<div class="perf-mini-ph">${s.emp.name[0]}</div>`;
+    const col=s.perf>=90?'#10b981':s.perf>=70?'#4f46e5':s.perf>=50?'#f59e0b':'#ef4444';
+    return `<tr>
+      <td class="perf-rank">#${i+1}</td>
+      <td><div class="perf-emp-cell">${ph}<div><div class="perf-emp-name">${s.emp.name}</div><div class="perf-emp-desig">${s.emp.desig}</div></div></div></td>
+      <td><div style="font-weight:700;color:${col};font-size:15px">${s.perf}%</div><div class="perf-score-bar"><div class="perf-score-fill" style="width:${Math.min(s.perf,100)}%;background:${col}"></div></div></td>
+      <td style="font-weight:700">${s.total.toLocaleString()}</td>
+      <td>${s.avgPerDay}</td><td>${s.workDays}</td>
+      <td style="color:${s.attPct>=90?'#10b981':s.attPct>=70?'#f59e0b':'#ef4444'};font-weight:700">${s.attPct}%</td>
+      <td>${badge(s.perf)}</td></tr>`;
+  }).join('');
+  wrap.innerHTML=`<table class="perf-table"><thead><tr><th>#</th><th>Employee</th><th>Performance (${label})</th><th>Tasks Done</th><th>Avg/Day</th><th>Active Days</th><th>Attendance</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
+}
+
+function renderHeatmap() {
+  const wrap=document.getElementById('heatmapWrap'); if(!wrap) return;
+  const now=new Date();
+  const days=[];
+  for(let i=29;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); days.push(toLocalDateStr(d)); }
+  const dateLbls=`<div class="heatmap-dates">${days.map((ds,i)=>{const d=new Date(ds.replace(/-/g,'/')); return `<div class="hm-date-lbl">${i%5===0?d.getDate():''}</div>`; }).join('')}</div>`;
+  const rows=employees.map(emp=>{
+    const maxT=Math.max(...days.map(ds=>{const e=(submissions[emp.id]||[]).find(s=>s.date===ds); return e?FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(e.fields[f.key])||0),0):0;}),1);
+    const cells=days.map(ds=>{
+      const e=(submissions[emp.id]||[]).find(s=>s.date===ds);
+      if(!e) return `<div class="hm-cell hm-0" title="${ds}${isHoliday(ds)?' (Holiday)':''}"></div>`;
+      const t=FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(e.fields[f.key])||0),0);
+      return `<div class="hm-cell hm-${Math.ceil((t/maxT)*4)}" title="${ds}: ${t} tasks"></div>`;
+    }).join('');
+    return `<div class="heatmap-emp-row"><div class="heatmap-emp-lbl" title="${emp.name}">${emp.name.split(' ')[0]}</div><div class="heatmap-cells">${cells}</div></div>`;
+  }).join('');
+  wrap.innerHTML=dateLbls+rows+`<div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:10px;color:var(--text3)">Less <div class="hm-cell hm-0" style="margin:0"></div><div class="hm-cell hm-1" style="margin:0"></div><div class="hm-cell hm-2" style="margin:0"></div><div class="hm-cell hm-3" style="margin:0"></div><div class="hm-cell hm-4" style="margin:0"></div> More</div>`;
+}
 
 // ═══════════════════════════════════════════════
 // BOOT
@@ -1277,8 +1527,10 @@ function switchTab(tab) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
   document.getElementById('page-'+tab).classList.add('active');
-  document.querySelectorAll('.nav-tab')[tab==='entry'?0:1].classList.add('active');
+  const tabIdx = {entry:0, report:1, summary:2};
+  document.querySelectorAll('.nav-tab')[tabIdx[tab]||0].classList.add('active');
   if(tab==='report') renderCards();
+  if(tab==='summary') renderPerfSummary();
   if(tab!=='entry') document.getElementById('resetBtnWrap').style.display='none';
   else if(currentEmp) document.getElementById('resetBtnWrap').style.display='block';
   window.scrollTo(0,0);
@@ -1465,9 +1717,11 @@ const TN_HOLIDAYS = new Set([
 ]);
 
 function isHoliday(dateStr) {
-  const d = new Date(dateStr);
+  // Parse as local date to avoid UTC timezone offset issues
+  const parts = dateStr.split('-');
+  const d = new Date(+parts[0], +parts[1]-1, +parts[2]);
   const dow = d.getDay();
-  if(dow === 0 || dow === 6) return true; // weekend
+  if(dow === 0 || dow === 6) return true; // Sat/Sun always holiday
   if(TN_HOLIDAYS.has(dateStr)) return true;
   return false;
 }
@@ -1493,20 +1747,29 @@ function getCycleAttendance(empId, cycleStart, cycleEnd) {
   const subs = submissions[empId]||[];
   const subSet = new Set(subs.map(s=>s.date));
   const now = new Date();
+  const todayLocal = toLocalDateStr(now);
   let present=0, absent=0, holidays=0, workdays=0;
   const days = [];
-  for(let d=new Date(cycleStart); d<=cycleEnd && d<=now; d.setDate(d.getDate()+1)){
-    const ds = d.toISOString().split('T')[0];
+
+  for(let d=new Date(cycleStart); d<=cycleEnd; d.setDate(d.getDate()+1)){
+    const ds = toLocalDateStr(d);
     const isHol = isHoliday(ds);
+    const isPast = ds < todayLocal;
+    const isToday = ds === todayLocal;
+
     if(isHol){ holidays++; days.push({ds, status:'holiday'}); continue; }
-    workdays++;
-    if(subSet.has(ds)){ present++; days.push({ds, status:'present'}); }
-    else { absent++; days.push({ds, status:'absent'}); }
-  }
-  // Future days in cycle
-  for(let d=new Date(Math.min(now.getTime()+86400000, cycleEnd.getTime()+1)); d<=cycleEnd; d.setDate(d.getDate()+1)){
-    const ds = d.toISOString().split('T')[0];
-    days.push({ds, status: isHoliday(ds)?'holiday':'future'});
+
+    if(isPast) {
+      workdays++;
+      if(subSet.has(ds)){ present++; days.push({ds, status:'present'}); }
+      else { absent++; days.push({ds, status:'absent'}); }
+    } else if(isToday) {
+      // Today: only mark present if submitted
+      if(subSet.has(ds)){ workdays++; present++; days.push({ds, status:'present'}); }
+      else { days.push({ds, status:'future'}); } // not yet submitted
+    } else {
+      days.push({ds, status: isHoliday(ds)?'holiday':'future'});
+    }
   }
   const lop = Math.max(0, absent - 2);
   const paid = Math.min(2, absent);
@@ -1538,7 +1801,7 @@ function buildETCalendar(empId) {
   let weeks = [];
   let week = [];
   for(let d=new Date(startOfGrid); d<=endOfGrid; d.setDate(d.getDate()+1)){
-    const ds = d.toISOString().split('T')[0];
+    const ds = toLocalDateStr(d);
     const inCycle = d >= cycleStart && d <= cycleEnd;
     const status = inCycle ? (attMap[ds]||'future') : 'out';
     week.push({ds, day:d.getDate(), status, inCycle});
@@ -2003,6 +2266,38 @@ function moTotal(subs, ago) {
 }
 </script>
 
-<!-- Apps Script code is in the separate EtailLabs_AppScript.gs file -->
+<!-- ═══ TAB 3 — OVERALL PERFORMANCE SUMMARY ═══ -->
+<div class="page" id="page-summary">
+  <div class="perf-wrap">
+    <div class="perf-header">
+      <div>
+        <h1 class="perf-title">Performance Intelligence</h1>
+        <p class="perf-sub">Team productivity overview · Appraisal-ready insights</p>
+      </div>
+      <div class="perf-month-toggle" id="perfMonthToggle"></div>
+    </div>
+
+    <!-- Top Performers -->
+    <div class="perf-section-title">🏆 Top Performers</div>
+    <div class="top3-grid" id="top3Grid"></div>
+
+    <!-- KPI Overview -->
+    <div class="perf-section-title" style="margin-top:28px">📊 Team Overview</div>
+    <div class="team-kpi-row" id="teamKpiRow"></div>
+
+    <!-- Employee Performance Table -->
+    <div class="perf-section-title" style="margin-top:28px">👥 Individual Performance</div>
+    <div class="perf-tabs-row">
+      <button class="perf-tab-btn active" onclick="setPerfView('month',this)">Monthly</button>
+      <button class="perf-tab-btn" onclick="setPerfView('week',this)">Weekly</button>
+      <button class="perf-tab-btn" onclick="setPerfView('day',this)">Daily</button>
+    </div>
+    <div class="perf-table-wrap" id="perfTableWrap"></div>
+
+    <!-- Day-wise Heatmap -->
+    <div class="perf-section-title" style="margin-top:28px">🗓 Activity Heatmap — Last 30 Days</div>
+    <div class="heatmap-wrap" id="heatmapWrap"></div>
+  </div>
+</div>
 </body>
 </html>
