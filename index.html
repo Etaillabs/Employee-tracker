@@ -1047,7 +1047,7 @@ function parseSubmissionsInto(csv, target) {
     if(!empId||!date) continue;
     if(!target[empId]) target[empId]=[];
     const entry = {date, fields:{}};
-    FIELDS.forEach((f,idx) => { entry.fields[f.key] = parseFloat(c[idx+3])||0; });
+    FIELDS.forEach((f,idx) => { entry.fields[f.key] = f.type==='text' ? (c[idx+3]||'') : (parseFloat(c[idx+3])||0); });
     // avoid duplicates by date
     if(!target[empId].find(e=>e.date===date)) target[empId].push(entry);
   }
@@ -1968,7 +1968,7 @@ function buildMonthRows(emp, subs) {
     const label=dt.toLocaleDateString('en-IN',{month:'long',year:'numeric'});
     const ms=subs.filter(s=>{const d=new Date(s.date);return d.getFullYear()===yr&&d.getMonth()===mo;});
     const wd=ms.length;
-    const total=ms.reduce((a,s)=>a+Object.values(s.fields).reduce((x,y)=>x+y,0),0);
+    const total=ms.reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
     const avg=wd>0?Math.round(total/wd):0;
     const tpd=Object.values(emp.targets).reduce((a,b)=>a+b,0);
     const perf=tpd*wd>0?Math.min(Math.round((total/(tpd*wd))*100),200):0;
@@ -1994,12 +1994,12 @@ function weekTotal(subs, ago) {
   const start=new Date(now); start.setDate(now.getDate()-day+1-ago*7);
   const end=new Date(start); end.setDate(start.getDate()+7);
   return subs.filter(s=>{const d=new Date(s.date);return d>=start&&d<end;})
-    .reduce((a,s)=>a+Object.values(s.fields).reduce((x,y)=>x+y,0),0);
+    .reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
 }
 function moTotal(subs, ago) {
   const now=new Date(), yr=now.getFullYear(), mo=now.getMonth()-ago;
   return subs.filter(s=>{const d=new Date(s.date);return d.getFullYear()===yr&&d.getMonth()===mo;})
-    .reduce((a,s)=>a+Object.values(s.fields).reduce((x,y)=>x+y,0),0);
+    .reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
 }
 </script>
 
