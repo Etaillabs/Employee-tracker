@@ -1007,10 +1007,51 @@ const todayStr = toLocalDateStr(today);
 let perfSelectedMonth = null;
 let perfView = 'month';
 
+let perfSelectedDay = null; // null = today
+
+function getLast10WorkDays() {
+  const now = new Date();
+  const days = [];
+  for(let i=0; days.length<10 && i<20; i++) {
+    const d = new Date(now); d.setDate(now.getDate()-i);
+    const ds = toLocalDateStr(d);
+    if(!isHoliday(ds)) days.push({ds, dt:new Date(d)});
+  }
+  return days;
+}
+
+function buildPerfDayToggles() {
+  const row = document.getElementById('perfDayToggleRow');
+  if(!row) return;
+  const days = getLast10WorkDays();
+  if(!perfSelectedDay) perfSelectedDay = days[0]?.ds;
+  row.innerHTML = '';
+  days.forEach(day => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tog';
+    btn.dataset.ds = day.ds;
+    const label = day.dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    btn.textContent = label;
+    const isActive = day.ds === perfSelectedDay;
+    btn.style.cssText = `padding:5px 11px;border-radius:7px;border:1px solid rgba(79,70,229,0.25);font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s;background:${isActive?'#4f46e5':'rgba(79,70,229,0.08)'};color:${isActive?'#fff':'#4f46e5'};`;
+    btn.addEventListener('click', () => {
+      perfSelectedDay = day.ds;
+      buildPerfDayToggles(); // re-render to update active state
+      renderPerfTable();
+    });
+    row.appendChild(btn);
+  });
+}
+
 function setPerfView(view, btn) {
   perfView = view;
   document.querySelectorAll('.perf-tab-btn').forEach(b=>b.classList.remove('active'));
   if(btn) btn.classList.add('active');
+  const dayRow = document.getElementById('perfDayToggleRow');
+  if(dayRow) {
+    if(view === 'day') { buildPerfDayToggles(); dayRow.style.display='flex'; }
+    else { dayRow.style.display='none'; }
+  }
   renderPerfTable();
 }
 
@@ -1102,7 +1143,12 @@ function getPerfRange() {
   const now = new Date();
   const mo = perfSelectedMonth !== null ? perfSelectedMonth : now.getMonth();
   const yr = now.getFullYear();
-  if(perfView==='day') { const ds=toLocalDateStr(now); return {from:ds,to:ds,label:'Today'}; }
+  if(perfView==='day') {
+    const ds = perfSelectedDay || toLocalDateStr(now);
+    const dt = new Date(ds.replace(/-/g,'/'));
+    const label = dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'});
+    return {from:ds,to:ds,label};
+  }
   if(perfView==='week') {
     const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
     return {from:toLocalDateStr(mon),to:toLocalDateStr(now),label:'This Week'};
@@ -1142,7 +1188,11 @@ function updatePmtActive() {
 }
 
 function renderPerfSummary() {
-  buildPerfMonthToggle(); renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
+  buildPerfMonthToggle();
+  // Init day toggles (hidden by default since default view is 'month')
+  const dayRow = document.getElementById('perfDayToggleRow');
+  if(dayRow) { buildPerfDayToggles(); dayRow.style.display='none'; }
+  renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
 }
 
 // Count actual calendar working days (non-holiday weekdays) in range
@@ -2017,22 +2067,7 @@ function buildReport(emp) {
   // QSG text if any
   const qsgVal = todayE?.fields?.qsg_prod ? `<div style="margin-top:6px;padding:8px 10px;background:var(--surface2);border-radius:7px;font-size:12px;color:var(--text2)"><b>QSG Production:</b> ${todayE.fields.qsg_prod}</div>` : '';
 
-  // Field-wise table for today
-  const fwRows = FIELDS.filter(f=>f.type!=='text').map(f=>{
-    const actual = todayE ? (parseFloat(todayE.fields[f.key])||0) : 0;
-    const target = emp.targets[f.key]||0;
-    const pct = target>0 ? Math.min(Math.round((actual/target)*100),200) : 0;
-    const barColor = pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
-    return `<tr>
-      <td>${f.lbl}</td>
-      <td class="fw-count">${actual}</td>
-      <td class="fw-tgt">${target}</td>
-      <td style="min-width:100px">
-        <div style="font-size:11px;font-weight:700;color:${barColor}">${pct}%</div>
-        <div class="fw-perf-bar"><div class="fw-perf-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
-      </td>
-    </tr>`;
-  }).join('');
+  // Field-wise built dynamically via buildFWTable()
 
   // Comment/remark of today
   const commentHtml = todayE?.comment ? `
@@ -2090,12 +2125,12 @@ function buildReport(emp) {
       </div>
     </div>
 
-    <div class="r-section">
-      <div class="r-section-title">🎯 Field-wise Today's Performance</div>
-      <table class="fw-table">
-        <thead><tr><th>Field</th><th>Today</th><th>Target</th><th>Achievement</th></tr></thead>
-        <tbody>${fwRows}</tbody>
-      </table>
+    <div class="r-section" id="fwSection">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+        <div class="r-section-title" style="margin-bottom:0">🎯 Field-wise Performance</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap;" id="fwDayToggleWrap"></div>
+      </div>
+      <div id="fwTableContainer"></div>
     </div>
 
     ${commentHtml}
@@ -2110,6 +2145,7 @@ function buildReport(emp) {
   `;
 
   buildDayToggles(emp, subs);
+  buildFWTable(emp, subs);
   requestAnimationFrame(()=>{ setTimeout(()=>{ drawCharts(emp,subs,todayE,tgt); }, 60); });
 }
 
@@ -2208,6 +2244,76 @@ function loadScript(src) {
     s.src=src; s.onload=res; s.onerror=rej;
     document.head.appendChild(s);
   });
+}
+
+function buildFWTable(emp, subs) {
+  const toggleWrap = document.getElementById('fwDayToggleWrap');
+  const container  = document.getElementById('fwTableContainer');
+  if(!toggleWrap||!container) return;
+
+  const days = getLast10WorkDays ? getLast10WorkDays() : [];
+  // Fallback if perf tab not loaded yet
+  const last10 = [];
+  const now = new Date();
+  for(let i=0; last10.length<10 && i<20; i++) {
+    const d = new Date(now); d.setDate(now.getDate()-i);
+    const ds = toLocalDateStr(d);
+    if(!isHoliday(ds)) last10.push({ds, dt:new Date(d)});
+  }
+
+  let activeFWDay = last10[0]?.ds;
+
+  function renderFWForDay(ds) {
+    activeFWDay = ds;
+    // Update button styles
+    toggleWrap.querySelectorAll('.day-tog').forEach(b=>{
+      b.style.background = b.dataset.ds===ds ? '#4f46e5' : 'rgba(79,70,229,0.08)';
+      b.style.color = b.dataset.ds===ds ? '#fff' : '#4f46e5';
+    });
+    const entry = subs.find(s=>s.date===ds);
+    const dateLabel = new Date(ds.replace(/-/g,'/')).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'short'});
+    if(!entry) {
+      container.innerHTML = `<div style="color:var(--text3);font-size:13px;padding:12px 0">No submission for ${dateLabel}</div>`;
+      return;
+    }
+    const rows = FIELDS.filter(f=>f.type!=='text').map(f=>{
+      const actual = parseFloat(entry.fields[f.key])||0;
+      const target = emp.targets[f.key]||0;
+      if(actual===0 && target===0) return '';
+      const pct = target>0 ? Math.min(Math.round((actual/target)*100),200) : (actual>0?100:0);
+      const barColor = pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
+      return `<tr>
+        <td>${f.lbl}</td>
+        <td class="fw-count">${actual}</td>
+        <td class="fw-tgt">${target||'—'}</td>
+        <td style="min-width:100px">
+          <div style="font-size:11px;font-weight:700;color:${barColor}">${pct}%</div>
+          <div class="fw-perf-bar"><div class="fw-perf-fill" style="width:${Math.min(pct,100)}%;background:${barColor}"></div></div>
+        </td>
+      </tr>`;
+    }).filter(Boolean).join('');
+    container.innerHTML = `
+      <div style="font-size:12px;color:var(--text2);margin-bottom:8px;font-weight:600">${dateLabel}</div>
+      <table class="fw-table">
+        <thead><tr><th>Field</th><th>Actual</th><th>Target</th><th>Achievement</th></tr></thead>
+        <tbody>${rows||'<tr><td colspan="4" style="color:var(--text3)">All fields zero</td></tr>'}</tbody>
+      </table>`;
+  }
+
+  // Build toggle buttons
+  toggleWrap.innerHTML = '';
+  last10.forEach(day => {
+    const btn = document.createElement('button');
+    btn.className = 'day-tog';
+    btn.dataset.ds = day.ds;
+    const label = day.dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    btn.textContent = label;
+    btn.style.cssText = 'padding:5px 11px;border-radius:7px;border:1px solid rgba(79,70,229,0.25);font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s;background:rgba(79,70,229,0.08);color:#4f46e5;';
+    btn.addEventListener('click', () => renderFWForDay(day.ds));
+    toggleWrap.appendChild(btn);
+  });
+
+  if(last10.length) renderFWForDay(activeFWDay);
 }
 
 function buildDayToggles(emp, subs) {
@@ -2411,8 +2517,8 @@ function moTotal(subs, ago) {
     <div class="perf-tabs-row">
       <button class="perf-tab-btn active" onclick="setPerfView('month',this)">Monthly</button>
       <button class="perf-tab-btn" onclick="setPerfView('week',this)">Weekly</button>
-      <button class="perf-tab-btn" onclick="setPerfView('day',this)">Daily</button>
     </div>
+    <div class="perf-tabs-row" id="perfDayToggleRow" style="margin-top:-6px;flex-wrap:wrap;gap:5px;"></div>
     <div class="perf-table-wrap" id="perfTableWrap"></div>
 
     <!-- Day-wise Heatmap -->
