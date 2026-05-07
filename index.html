@@ -259,7 +259,7 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 }
 .field-card:hover { border-color:rgba(79,70,229,0.35); box-shadow:0 4px 18px rgba(79,70,229,0.13); transform:translateY(-1px); }
 .field-card-label {
-  font-size:11px; font-weight:700; color:#F77D65;
+  font-size:11px; font-weight:700; color:#FA875F;
   text-transform:uppercase; letter-spacing:0.5px;
 }
 .field-card input[type=number], .field-card input[type=text] {
@@ -915,6 +915,10 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
       Deploy your Apps Script as a Web App → Execute as <b>Me</b> → Anyone can access → copy the URL and paste it here.
     </p>
     <div id="settingsUrlStatus" style="font-size:11px;margin-top:4px;min-height:16px"></div>
+    <hr style="border:none;border-top:1px solid var(--border);margin:16px 0">
+    <div class="f-label">Cache Management</div>
+    <p style="font-size:11px;color:var(--text3);margin:4px 0 10px">If dashboard shows deleted/stale data, clear local cache and re-sync from Google Sheet.</p>
+    <button onclick="clearLocalCache()" style="padding:8px 16px;background:#fff3f3;border:1px solid #fca5a5;color:#dc2626;border-radius:8px;font-size:12px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif">🗑 Clear Local Cache & Re-sync</button>
     <div class="admin-row" style="margin-top:16px">
       <button class="btn-cancel-sm" onclick="closeSettings()">Cancel</button>
       <button class="btn-do-reset" style="background:linear-gradient(135deg,var(--accent-dark),var(--accent))" onclick="saveSettings()">Save</button>
@@ -1392,20 +1396,18 @@ async function loadAll(showStatus=false) {
     if(txt2 && !txt2.trim().startsWith('<!')) {
       const fresh = {};
       parseSubmissionsInto(txt2, fresh);
-      // merge: sheet2 rows + any local-only entries not yet in sheet2
-      const local = getLocalSubs();
-      for(const id in local) {
-        if(!fresh[id]) fresh[id] = [];
-        local[id].forEach(ls => {
-          if(!fresh[id].find(r => r.date === ls.date)) fresh[id].push(ls);
-        });
-      }
+      // Sheet2 CSV is SOURCE OF TRUTH — do NOT merge localStorage
+      // If a row was deleted from Sheet2, it should disappear here too
       submissions = fresh;
+      // Sync localStorage to match Sheet2 (removes deleted entries)
+      localStorage.setItem('etl_subs', JSON.stringify(fresh));
+      console.log('[Sheet2] loaded', Object.keys(fresh).length, 'employees from sheet');
     } else {
       throw new Error('Empty or HTML response — sheet may not be published');
     }
   } catch(e) {
     console.warn('[Sheet2] FAILED:', e.message);
+    // Only fallback to localStorage when Sheet2 is unreachable
     submissions = {};
     const local = getLocalSubs();
     for(const id in local) submissions[id] = [...local[id]];
@@ -1709,6 +1711,17 @@ function switchTab(tab) {
 // ═══════════════════════════════════════════════
 // SETTINGS MODAL
 // ═══════════════════════════════════════════════
+async function clearLocalCache() {
+  localStorage.removeItem('etl_subs');
+  submissions = {};
+  closeSettings();
+  showToast('🗑 Cache cleared — syncing from Sheet…', 'ok');
+  await loadAll();
+  populateDropdown();
+  renderCards();
+  showToast('✅ Re-synced from Google Sheet', 'ok');
+}
+
 function openSettings() {
   const pw = prompt('Enter admin password to access Settings:');
   if(pw !== ADMIN_PASS) {
