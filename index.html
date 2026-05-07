@@ -1049,7 +1049,7 @@ function setPerfView(view, btn) {
   if(btn) btn.classList.add('active');
   const dayRow = document.getElementById('perfDayToggleRow');
   if(dayRow) {
-    if(view === 'day') { buildPerfDayToggles(); dayRow.style.display='flex'; }
+    if(view==='day') { buildPerfDayToggles(); dayRow.style.display='flex'; }
     else { dayRow.style.display='none'; }
   }
   renderPerfTable();
@@ -1102,9 +1102,9 @@ function getEmpScoreData(emp) {
 
   // Average daily performance × attendance factor
   const avgDayPerf = submittedDays>0 ? totalPerfPct/submittedDays : 0;
-  // Penalize for absent days: multiply by (submitted/calWorkDays)
+  // If no submissions → perf = 0 (don't rank as top performer)
   const attFactor = submittedDays/calWorkDays;
-  const perf = Math.min(Math.round(avgDayPerf * attFactor), 200);
+  const perf = submittedDays===0 ? 0 : Math.min(Math.round(avgDayPerf * attFactor), 200);
 
   const avgPerDay=submittedDays>0?Math.round(total/submittedDays):0;
   const {cycleStart,cycleEnd}=getETCycle();
@@ -1189,9 +1189,13 @@ function updatePmtActive() {
 
 function renderPerfSummary() {
   buildPerfMonthToggle();
-  // Init day toggles (hidden by default since default view is 'month')
+  // Reset to monthly view each time tab opens
+  perfView = 'month';
+  document.querySelectorAll('.perf-tab-btn').forEach(b=>{
+    b.classList.toggle('active', b.textContent==='Monthly');
+  });
   const dayRow = document.getElementById('perfDayToggleRow');
-  if(dayRow) { buildPerfDayToggles(); dayRow.style.display='none'; }
+  if(dayRow) { dayRow.style.display='none'; }
   renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
 }
 
@@ -1250,8 +1254,42 @@ function renderTeamKPI() {
 function renderPerfTable() {
   const wrap=document.getElementById('perfTableWrap'); if(!wrap) return;
   const {from,to,label}=getPerfRange();
-  const scored=employees.map(emp=>({emp,...getEmpScoreData(emp)})).sort((a,b)=>b.perf-a.perf);
   const badge=p=>p>=90?'<span class="perf-badge badge-excellent">Excellent</span>':p>=70?'<span class="perf-badge badge-good">Good</span>':p>=50?'<span class="perf-badge badge-average">Average</span>':'<span class="perf-badge badge-low">Needs Attention</span>';
+  const scored=employees.map(emp=>({emp,...getEmpScoreData(emp)})).sort((a,b)=>b.perf-a.perf);
+
+  if(perfView==='day') {
+    // Date-wise: show field-by-field breakdown for selected day
+    const rows=scored.map((s,i)=>{
+      const ph=s.emp.imageUrl?`<img class="perf-mini-photo" src="${s.emp.imageUrl}" onerror="this.outerHTML='<div class=perf-mini-ph>${s.emp.name[0]}</div>'">`:`<div class="perf-mini-ph">${s.emp.name[0]}</div>`;
+      const col=s.perf>=90?'#10b981':s.perf>=70?'#4f46e5':s.perf>=50?'#f59e0b':'#ef4444';
+      const entry=(submissions[s.emp.id]||[]).find(sub=>sub.date===from);
+      const workedFields=entry?FIELDS.filter(f=>f.type!=='text'&&(parseFloat(entry.fields[f.key])||0)>0):[];
+      const fieldBreakdown=workedFields.length
+        ?workedFields.map(f=>{
+            const actual=parseFloat(entry.fields[f.key])||0;
+            const tgt=s.emp.targets[f.key]||0;
+            const pct=tgt>0?Math.min(Math.round((actual/tgt)*100),200):100;
+            const bc=pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
+            return `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;margin:2px">
+              <span style="color:var(--text2)">${f.lbl}</span>
+              <b style="color:var(--accent)">${actual}</b>
+              <span style="color:${bc};font-weight:700">${pct}%</span>
+            </span>`;
+          }).join('')
+        :'<span style="color:var(--text3);font-size:11px">No submission</span>';
+      return `<tr>
+        <td class="perf-rank">#${i+1}</td>
+        <td><div class="perf-emp-cell">${ph}<div><div class="perf-emp-name">${s.emp.name}</div><div class="perf-emp-desig">${s.emp.desig}</div></div></div></td>
+        <td><div style="font-weight:700;color:${col};font-size:15px">${s.perf}%</div></td>
+        <td style="font-weight:700">${s.total}</td>
+        <td colspan="4" style="max-width:400px"><div style="display:flex;flex-wrap:wrap;gap:2px">${fieldBreakdown}</div></td>
+      </tr>`;
+    }).join('');
+    wrap.innerHTML=`<table class="perf-table"><thead><tr><th>#</th><th>Employee</th><th>Perf%</th><th>Total</th><th colspan="4">Field-wise — ${label}</th></tr></thead><tbody>${rows}</tbody></table>`;
+    return;
+  }
+
+  // Monthly / Weekly view
   const rows=scored.map((s,i)=>{
     const ph=s.emp.imageUrl?`<img class="perf-mini-photo" src="${s.emp.imageUrl}" onerror="this.outerHTML='<div class=perf-mini-ph>${s.emp.name[0]}</div>'">`:`<div class="perf-mini-ph">${s.emp.name[0]}</div>`;
     const col=s.perf>=90?'#10b981':s.perf>=70?'#4f46e5':s.perf>=50?'#f59e0b':'#ef4444';
@@ -2517,8 +2555,9 @@ function moTotal(subs, ago) {
     <div class="perf-tabs-row">
       <button class="perf-tab-btn active" onclick="setPerfView('month',this)">Monthly</button>
       <button class="perf-tab-btn" onclick="setPerfView('week',this)">Weekly</button>
+      <button class="perf-tab-btn" onclick="setPerfView('day',this)">Date-wise</button>
     </div>
-    <div class="perf-tabs-row" id="perfDayToggleRow" style="margin-top:-6px;flex-wrap:wrap;gap:5px;"></div>
+    <div id="perfDayToggleRow" style="display:none;flex-wrap:wrap;gap:5px;margin-bottom:14px;"></div>
     <div class="perf-table-wrap" id="perfTableWrap"></div>
 
     <!-- Day-wise Heatmap -->
