@@ -1338,9 +1338,15 @@ document.addEventListener('DOMContentLoaded', async () => {
   populateDropdown();
   renderCards();
   startAutoSync();
-  if(!getWebAppUrl()) {
-    setTimeout(()=>showToast('⚠ Apps Script URL not set — open ⚙ Settings to configure', 'warn'), 1200);
-  }
+  // URL check after loadAll (which populates _sheetWebAppUrl from sheet)
+  setTimeout(()=>{
+    const url = getWebAppUrl();
+    if(!url) {
+      showToast('⚠ Apps Script URL not set — add to Sheet1 cell AG1 or open ⚙ Settings', 'warn');
+    } else if(_sheetWebAppUrl && !localStorage.getItem('etl_webapp_url')) {
+      showToast('✓ Apps Script URL loaded from Google Sheet', 'ok');
+    }
+  }, 1500);
 });
 
 function setNavDate() {
@@ -1431,8 +1437,20 @@ function parseCSV(line) {
 
 function parseEmployees(csv) {
   const lines = csv.split('\n').map(l=>l.trim()).filter(Boolean);
-  // Sheet1 has 2 header rows (group names + field names), data starts at row index 2
+  // Sheet1 layout: Row0=group headers, Row1=field names, Row2+=employee data
+  // Apps Script URL is stored in Sheet1 cell AG1 (col index 32 of row 0)
   if(lines.length < 3) { loadFallback(); return; }
+
+  // ── Pull Apps Script URL from Sheet1 header (col AG = index 32) ──
+  try {
+    const h = parseCSV(lines[0]);
+    const u = (h[32]||'').trim();
+    if(u.startsWith('https://script.google.com/')) {
+      _sheetWebAppUrl = u;
+      console.log('[Config] Apps Script URL from Sheet1:', u.slice(0,60));
+    }
+  } catch(e) { console.warn('[Config] URL read error:', e); }
+
   const newList = [];
   for(let i=2; i<lines.length; i++){
     const c = parseCSV(lines[i]);
@@ -1648,9 +1666,19 @@ function submitEntry() {
     `<strong>${currentEmp.name}</strong>'s report for <strong>${today.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}</strong> has been recorded.`;
 }
 
-// Apps Script Web App URL — stored in localStorage, configurable via Settings modal
+// ─── Apps Script URL ───
+// PRIMARY source: Sheet1 Row 1, Column AF (index 31) — same column as imageUrl but in row 0/1
+// FALLBACK: localStorage (so admin-set URL still works as override)
+// HOW IT WORKS:
+//   1. On load, parseEmployees() reads row index 0 (first header row), col 31 → if it's a valid script URL, store it
+//   2. Settings modal allows admin to manually set/override (stored in localStorage)
+//   3. getWebAppUrl() checks localStorage first (manual override), then sheet-fetched value
+
+let _sheetWebAppUrl = ''; // populated from Sheet1 during parseEmployees
+
 function getWebAppUrl() {
-  return localStorage.getItem('etl_webapp_url') || '';
+  // Manual admin override takes priority, then sheet-fetched URL
+  return localStorage.getItem('etl_webapp_url') || _sheetWebAppUrl || '';
 }
 
 async function pushToSheet(emp, entry) {
@@ -1732,8 +1760,18 @@ function openSettings() {
   const inp = document.getElementById('settingsUrl');
   inp.value = url;
   const status = document.getElementById('settingsUrlStatus');
-  status.textContent = url ? '✓ URL is configured' : '⚠ No URL saved yet';
-  status.style.color  = url ? 'var(--success)' : 'var(--warn)';
+  const fromSheet = !!_sheetWebAppUrl;
+  const manualUrl = localStorage.getItem('etl_webapp_url')||'';
+  if(manualUrl) {
+    status.textContent = '✓ Manual URL saved (overrides sheet)';
+    status.style.color = 'var(--success)';
+  } else if(fromSheet) {
+    status.textContent = '✓ URL auto-loaded from Google Sheet (AG1)';
+    status.style.color = 'var(--success)';
+  } else {
+    status.textContent = '⚠ No URL found — paste below OR add to Sheet1 cell AG1';
+    status.style.color = 'var(--warn)';
+  }
   // Also unlock logo upload
   const logoBtn = document.querySelector('.nav-logo-upload');
   if(logoBtn) logoBtn.classList.add('admin-unlocked');
