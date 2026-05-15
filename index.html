@@ -1077,6 +1077,52 @@ function getActiveFields(empId, fromDate, toDate) {
   return active;
 }
 
+
+// ══════════════════════════════════════════════════
+// PROCESS GROUPS — for category-wise performance
+// ══════════════════════════════════════════════════
+const PROCESS_GROUPS = {
+  'Production':   {keys:['feeds_prod','plp_prod','clone_prod','qsg_prod'],   color:'#4f46e5', icon:'⚙'},
+  'Graphics':     {keys:['feeds_graphics','plp_graphics'],                    color:'#ec4899', icon:'🎨'},
+  'QC':           {keys:['qc_feeds','qc_plp','qc_content','qc_qsg'],         color:'#10b981', icon:'✅'},
+  'Upload & Del': {keys:['feeds_upload','plp_upload','clone_upload','files_delivered','qsg_delivered'], color:'#f59e0b', icon:'📦'},
+  'Price Mon':    {keys:['price_mon','price_mon_qc'],                         color:'#06b6d4', icon:'💰'},
+  'Meta & SEO':   {keys:['meta_title','meta_long','meta_qc','meta_html','decann','landmark'], color:'#8b5cf6', icon:'📝'},
+};
+
+// Calculate per-process performance for one emp over a date range
+function calcProcessPerf(emp, fromDate, toDate) {
+  const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
+  const result={};
+  Object.entries(PROCESS_GROUPS).forEach(([grpName, grp])=>{
+    const grpFields=FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
+    let actualTotal=0, targetTotal=0, daysWorked=0;
+    subs.forEach(s=>{
+      let dayActual=0, dayTarget=0;
+      grpFields.forEach(f=>{
+        const val=parseFloat(s.fields?.[f.key])||0;
+        if(val>0){ dayActual+=val; dayTarget+=(emp.targets[f.key]||0); }
+      });
+      if(dayActual>0){ actualTotal+=dayActual; targetTotal+=dayTarget; daysWorked++; }
+    });
+    const pct=targetTotal>0?Math.min(Math.round((actualTotal/targetTotal)*100),200):0;
+    result[grpName]={actual:actualTotal,target:targetTotal,pct,daysWorked,color:grp.color,icon:grp.icon};
+  });
+  return result;
+}
+
+// Overall perf = weighted avg of active process groups
+function calcOverallPerfFromProcesses(emp, fromDate, toDate) {
+  const procs=calcProcessPerf(emp,fromDate,toDate);
+  const active=Object.values(procs).filter(p=>p.actual>0);
+  if(!active.length) return 0;
+  const calWorkDays=Math.max(countWorkingDays(fromDate,toDate),1);
+  const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate).length;
+  const avgPct=active.reduce((a,p)=>a+p.pct,0)/active.length;
+  const attFactor=subs/calWorkDays;
+  return Math.min(Math.round(avgPct*attFactor),200);
+}
+
 function getEmpScoreData(emp) {
   const {from,to}=getPerfRange();
   const subs=(submissions[emp.id]||[]).filter(s=>s.date>=from&&s.date<=to);
@@ -1215,19 +1261,38 @@ function countWorkingDays(fromDate, toDate) {
 
 function renderTop3() {
   const grid=document.getElementById('top3Grid'); if(!grid) return;
-  const scored=employees.map(emp=>({emp,...getEmpScoreData(emp)})).sort((a,b)=>b.perf-a.perf).slice(0,3);
+  const {from,to}=getPerfRange();
+  // Use process-based overall perf for consistent top3 ranking
+  const scored=employees.map(emp=>{
+    const s=getEmpScoreData(emp);
+    const procPerf=calcOverallPerfFromProcesses(emp,from,to);
+    const procs=calcProcessPerf(emp,from,to);
+    return {emp,...s,procPerf,procs};
+  }).sort((a,b)=>b.procPerf-a.procPerf).slice(0,3);
+
   const badges=['🥇','🥈','🥉'], rankClass=['rank-1','rank-2','rank-3'];
   grid.innerHTML=scored.map((s,i)=>{
     const ph=s.emp.imageUrl
       ?`<img class="top3-photo" src="${s.emp.imageUrl}" onerror="this.outerHTML='<div class=top3-photo-ph>${s.emp.name[0]}</div>'">`
       :`<div class="top3-photo-ph">${s.emp.name[0]}</div>`;
+
+    // Process breakdown pills — only active groups (actual > 0)
+    const procPills=Object.entries(s.procs)
+      .filter(([,p])=>p.actual>0)
+      .map(([name,p])=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:5px 8px;border-radius:7px;background:rgba(255,255,255,0.6);border:1px solid rgba(0,0,0,0.07);margin-bottom:4px;">
+          <span style="font-size:11px;font-weight:600;color:#374151">${p.icon} ${name}</span>
+          <span style="font-size:12px;font-weight:800;color:${p.color}">${p.pct}%</span>
+        </div>`).join('');
+
     return `<div class="top3-card ${rankClass[i]}">
       <div class="top3-badge">${badges[i]}</div>${ph}
       <div class="top3-name">${s.emp.name}</div>
       <div class="top3-desig">${s.emp.desig}</div>
-      <div class="top3-score">${s.perf}%</div>
-      <div class="top3-score-lbl">Performance Score</div>
-      <div class="top3-stats">
+      <div class="top3-score">${s.procPerf}%</div>
+      <div class="top3-score-lbl">Overall Performance</div>
+      <div style="margin:12px 0 8px;text-align:left">${procPills||'<span style="font-size:11px;color:#999">No data for period</span>'}</div>
+      <div class="top3-stats" style="border-top:1px solid rgba(0,0,0,0.07);padding-top:10px;margin-top:4px">
         <div class="top3-stat"><span class="top3-stat-val">${s.total}</span><span class="top3-stat-lbl">Tasks</span></div>
         <div class="top3-stat"><span class="top3-stat-val">${s.avgPerDay}</span><span class="top3-stat-lbl">Avg/Day</span></div>
         <div class="top3-stat"><span class="top3-stat-val">${s.attPct}%</span><span class="top3-stat-lbl">Att.</span></div>
@@ -1243,16 +1308,36 @@ function renderTeamKPI() {
   const perfs=employees.map(e=>getEmpScoreData(e).perf);
   const teamTotal=totals.reduce((a,b)=>a+b,0);
   const avgPerf=perfs.length?Math.round(perfs.reduce((a,b)=>a+b,0)/perfs.length):0;
-  const topEmp=employees[totals.indexOf(Math.max(...totals,0))];
+  // Top performer = same logic as Top3 (perf% based, not count based)
+  const perfScored=employees.map(e=>({e,...getEmpScoreData(e)})).sort((a,b)=>b.perf-a.perf);
+  const topPerformer=perfScored[0];
   const activeCount=totals.filter(t=>t>0).length;
   const {cycleStart,cycleEnd}=getETCycle();
   const avgAtt=employees.length?Math.round(employees.map(e=>getCycleAttendance(e.id,cycleStart,cycleEnd).present).reduce((a,b)=>a+b,0)/employees.length):0;
+
+  // New KPI cards: remove Team Total Tasks, add Delivered Files + Worked SKUs
+  const allSubs=Object.values(submissions).flat().filter(s=>s.date>=from&&s.date<=to);
+  const filesDelivered=allSubs.reduce((a,s)=>(parseFloat(s.fields?.files_delivered)||0)+(parseFloat(s.fields?.qsg_delivered)||0)+a,0);
+  const feedsFilesD=allSubs.reduce((a,s)=>a+(parseFloat(s.fields?.files_delivered)||0),0);
+  const qsgFilesD=allSubs.reduce((a,s)=>a+(parseFloat(s.fields?.qsg_delivered)||0),0);
+  const workedSKUs=allSubs.reduce((a,s)=>
+    a+(parseFloat(s.fields?.feeds_prod)||0)+(parseFloat(s.fields?.plp_prod)||0)
+     +(parseFloat(s.fields?.clone_prod)||0)+(parseFloat(s.fields?.qsg_prod)||0),0);
+
   row.innerHTML=`
-    <div class="team-kpi-card" style="border-left-color:#4f46e5"><div class="team-kpi-lbl">Team Total Tasks</div><div class="team-kpi-val">${teamTotal.toLocaleString()}</div><div class="team-kpi-sub">All employees</div></div>
+    <div class="team-kpi-card" style="border-left-color:#06b6d4">
+      <div class="team-kpi-lbl">Total Delivered Files</div>
+      <div class="team-kpi-val">${filesDelivered.toLocaleString()}</div>
+      <div class="team-kpi-sub">Feeds/PLP: ${feedsFilesD} · QSG: ${qsgFilesD}</div>
+    </div>
+    <div class="team-kpi-card" style="border-left-color:#8b5cf6">
+      <div class="team-kpi-lbl">Total Worked SKUs</div>
+      <div class="team-kpi-val">${workedSKUs.toLocaleString()}</div>
+      <div class="team-kpi-sub">Feeds+PLP+Clone+QSG Prod</div>
+    </div>
     <div class="team-kpi-card" style="border-left-color:#10b981"><div class="team-kpi-lbl">Avg Performance</div><div class="team-kpi-val">${avgPerf}%</div><div class="team-kpi-sub">vs target</div></div>
-    <div class="team-kpi-card" style="border-left-color:#f59e0b"><div class="team-kpi-lbl">Top Performer</div><div class="team-kpi-val" style="font-size:16px">${topEmp?.name.split(' ')[0]||'—'}</div><div class="team-kpi-sub">${Math.max(...totals,0)} tasks</div></div>
-    <div class="team-kpi-card" style="border-left-color:#0ea5e9"><div class="team-kpi-lbl">Active Members</div><div class="team-kpi-val">${activeCount}/${employees.length}</div><div class="team-kpi-sub">submitted data</div></div>
-    <div class="team-kpi-card" style="border-left-color:#8b5cf6"><div class="team-kpi-lbl">Avg Attendance</div><div class="team-kpi-val">${avgAtt}</div><div class="team-kpi-sub">days present this cycle</div></div>`;
+    <div class="team-kpi-card" style="border-left-color:#f59e0b"><div class="team-kpi-lbl">Top Performer</div><div class="team-kpi-val" style="font-size:16px">${topPerformer?.e.name.split(' ')[0]||'—'}</div><div class="team-kpi-sub">${topPerformer?.perf||0}% perf score</div></div>
+    <div class="team-kpi-card" style="border-left-color:#0ea5e9"><div class="team-kpi-lbl">Active Members</div><div class="team-kpi-val">${activeCount}/${employees.length}</div><div class="team-kpi-sub">submitted data</div></div>`;
 }
 
 function renderPerfTable() {
