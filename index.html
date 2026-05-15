@@ -1262,13 +1262,12 @@ function countWorkingDays(fromDate, toDate) {
 function renderTop3() {
   const grid=document.getElementById('top3Grid'); if(!grid) return;
   const {from,to}=getPerfRange();
-  // Use process-based overall perf for consistent top3 ranking
+  // Use same getEmpScoreData().perf as Individual table and Team KPI — consistent ranking
   const scored=employees.map(emp=>{
     const s=getEmpScoreData(emp);
-    const procPerf=calcOverallPerfFromProcesses(emp,from,to);
     const procs=calcProcessPerf(emp,from,to);
-    return {emp,...s,procPerf,procs};
-  }).sort((a,b)=>b.procPerf-a.procPerf).slice(0,3);
+    return {emp,...s,procs};
+  }).sort((a,b)=>b.perf-a.perf).slice(0,3);
 
   const badges=['🥇','🥈','🥉'], rankClass=['rank-1','rank-2','rank-3'];
   grid.innerHTML=scored.map((s,i)=>{
@@ -1289,7 +1288,7 @@ function renderTop3() {
       <div class="top3-badge">${badges[i]}</div>${ph}
       <div class="top3-name">${s.emp.name}</div>
       <div class="top3-desig">${s.emp.desig}</div>
-      <div class="top3-score">${s.procPerf}%</div>
+      <div class="top3-score">${s.perf}%</div>
       <div class="top3-score-lbl">Overall Performance</div>
       <div style="margin:12px 0 8px;text-align:left">${procPills||'<span style="font-size:11px;color:#999">No data for period</span>'}</div>
       <div class="top3-stats" style="border-top:1px solid rgba(0,0,0,0.07);padding-top:10px;margin-top:4px">
