@@ -183,28 +183,6 @@ select:focus, input:focus, textarea:focus {
   box-shadow:0 0 0 3px rgba(79,70,229,0.10);
 }
 select option { background:#fff; }
-/* Difficulty Multiplier */
-.difficulty-row {
-  display:flex; align-items:center; gap:14px; flex-wrap:wrap;
-  padding:14px 18px; background:rgba(79,70,229,0.04);
-  border:2px solid rgba(79,70,229,0.12); border-radius:12px; margin-bottom:12px;
-}
-.diff-label { font-size:11px; font-weight:700; color:#3730a3; text-transform:uppercase; letter-spacing:0.5px; white-space:nowrap; }
-.diff-select {
-  padding:8px 32px 8px 12px; border:2px solid rgba(79,70,229,0.18); border-radius:9px;
-  font-size:13px; font-weight:700; color:#1e1b4b; background:#fff;
-  font-family:"Poppins",sans-serif; cursor:pointer; transition:all .2s; appearance:none;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='7' viewBox='0 0 10 7'%3E%3Cpath d='M1 1l4 4 4-4' stroke='%234f46e5' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat:no-repeat; background-position:right 10px center;
-}
-.diff-select:focus { outline:none; border-color:#4f46e5; }
-.diff-badge { padding:4px 10px; border-radius:7px; font-size:11px; font-weight:700; white-space:nowrap; }
-.diff-1x  { background:#f0f4ff; color:#4f46e5; border:1px solid rgba(79,70,229,0.2); }
-.diff-15x { background:#fef9c3; color:#78350f; border:1px solid #fcd34d; }
-.diff-2x  { background:#fef3c7; color:#92400e; border:1px solid #f59e0b; }
-.diff-3x  { background:#fee2e2; color:#991b1b; border:1px solid #fca5a5; }
-.diff-info { font-size:11px; color:var(--text3); font-style:italic; }
-
 textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
 /* Profile ID card */
@@ -610,13 +588,26 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 .badge-low { background:#fee2e2; color:#991b1b; }
 
 /* Heatmap */
-.heatmap-wrap { background:#fff; border-radius:16px; padding:20px; box-shadow:0 4px 20px rgba(30,27,75,0.08); overflow-x:auto; }
-.heatmap-emp-row { display:flex; align-items:center; gap:8px; margin-bottom:10px; }
-.heatmap-emp-lbl { font-size:11px; font-weight:600; color:var(--text2); width:110px; flex-shrink:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.heatmap-cells { display:flex; gap:3px; }
-.hm-cell { width:18px; height:18px; border-radius:3px; flex-shrink:0; cursor:default; transition:transform .1s; position:relative; }
-.hm-cell:hover { transform:scale(1.3); z-index:2; }
-.hm-cell[title] { cursor:help; }
+/* heatmap removed */
+
+/* Field-wise Productivity */
+.fwp-wrap { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(30,27,75,0.08); }
+.fwp-table { width:100%; border-collapse:collapse; font-size:13px; }
+.fwp-table th { background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; padding:11px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
+.fwp-table td { padding:10px 16px; border-bottom:1px solid var(--border); vertical-align:top; }
+.fwp-table tr:last-child td { border-bottom:none; }
+.fwp-table tr:hover td { background:rgba(79,70,229,0.02); }
+.fwp-emp-cell { display:flex; align-items:center; gap:8px; }
+.fwp-mini-ph { width:30px; height:38px; border-radius:5px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--accent); font-family:'Poppins',sans-serif; flex-shrink:0; }
+.fwp-mini-img { width:30px; height:38px; border-radius:5px; object-fit:cover; flex-shrink:0; }
+.fwp-total { font-family:'Poppins',sans-serif; font-size:20px; font-weight:800; color:var(--text); }
+.fwp-total-lbl { font-size:10px; color:var(--text3); font-weight:500; }
+.fwp-processes { display:flex; flex-wrap:wrap; gap:5px; }
+.fwp-proc-pill {
+  display:inline-flex; align-items:center; gap:5px;
+  padding:4px 10px; border-radius:7px; font-size:11px; font-weight:600;
+  border:1px solid transparent;
+}
 .hm-0 { background:rgba(99,102,145,0.08); }
 .hm-1 { background:#c7d2fe; }
 .hm-2 { background:#818cf8; }
@@ -880,31 +871,11 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
         </div>
       </div>
 
-      <div class="sec-header"><h2>Day Difficulty & Remarks</h2><div class="sec-line"></div></div>
+      <div class="sec-header"><h2>Comments & Remarks</h2><div class="sec-line"></div></div>
       <div class="fields-grid">
         <div class="field-card" style="grid-column:span 2">
-          <!-- Difficulty selector -->
-          <div class="difficulty-row">
-            <span class="diff-label">📊 Day Difficulty</span>
-            <select class="diff-select" id="f_difficulty" onchange="onDifficultyChange()">
-              <option value="1.0">Normal — Standard workload</option>
-              <option value="1.5">Moderate — Slightly complex files</option>
-              <option value="2.0">Complex — Heavy artwork / new brand</option>
-              <option value="3.0">Very Complex — Exceptional difficulty</option>
-            </select>
-            <span class="diff-badge diff-1x" id="diffBadge">1.0× multiplier</span>
-            <span class="diff-info" id="diffInfo">Performance calculated at actual count</span>
-          </div>
-          <!-- Comment — mandatory for non-Normal -->
-          <div style="margin-top:12px">
-            <div class="field-card-label">
-              Comment / Remark
-              <span id="commentReqStar" style="color:var(--danger);margin-left:2px;display:none">*</span>
-              <span style="font-size:10px;color:var(--text3);font-weight:400" id="commentHint"> (difficulties, blockers, or any note for the day)</span>
-            </div>
-            <textarea id="f_comment" placeholder="e.g. Faced issue with image sourcing for 3 SKUs, pending approval from manager…" style="min-height:80px"></textarea>
-            <div id="commentErr" style="display:none;color:var(--danger);font-size:11px;margin-top:4px">⚠ Comment is required when difficulty is not Normal</div>
-          </div>
+          <div class="field-card-label">Comment / Remark <span style="font-size:10px;color:var(--text3);font-weight:400">(difficulties, blockers, or any note for the day)</span></div>
+          <textarea id="f_comment" placeholder="e.g. Faced issue with image sourcing for 3 SKUs, pending approval from manager…" style="min-height:80px"></textarea>
         </div>
       </div>
 
@@ -1207,45 +1178,15 @@ function getEmpScoreData(emp) {
 }
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
-// Difficulty multiplier map
-const DIFF_MULTIPLIERS = {'1.0':1.0, '1.5':1.5, '2.0':2.0, '3.0':3.0};
-const DIFF_LABELS = {
-  '1.0': {label:'1.0× Normal',    cls:'diff-1x',  info:'Performance calculated at actual count'},
-  '1.5': {label:'1.5× Moderate',  cls:'diff-15x', info:'Each task counts as 1.5× towards performance'},
-  '2.0': {label:'2.0× Complex',   cls:'diff-2x',  info:'Each task counts as 2.0× — comment required'},
-  '3.0': {label:'3.0× Very Complex', cls:'diff-3x', info:'Each task counts as 3.0× — comment required'},
-};
-
-function onDifficultyChange() {
-  const val = document.getElementById('f_difficulty')?.value || '1.0';
-  const info = DIFF_LABELS[val];
-  const badge = document.getElementById('diffBadge');
-  const infoEl = document.getElementById('diffInfo');
-  const star = document.getElementById('commentReqStar');
-  const hint = document.getElementById('commentHint');
-  const errEl = document.getElementById('commentErr');
-  if(badge) { badge.textContent = info.label; badge.className = 'diff-badge ' + info.cls; }
-  if(infoEl) infoEl.textContent = info.info;
-  const needComment = val !== '1.0';
-  if(star) star.style.display = needComment ? 'inline' : 'none';
-  if(hint) hint.textContent = needComment ? ' (required — explain why today was complex)' : ' (difficulties, blockers, or any note for the day)';
-  if(errEl) errEl.style.display = 'none';
-}
-
 function calcDayPerf(entry, emp) {
   if(!entry) return 0;
-  // Apply difficulty multiplier to effective count
-  const multiplier = DIFF_MULTIPLIERS[entry.difficulty||'1.0'] || 1.0;
   let actual=0, target=0;
   FIELDS.filter(f=>f.type!=='text').forEach(f=>{
     const val=parseFloat(entry.fields[f.key])||0;
-    if(val>0){
-      actual += val * multiplier; // effective count = actual × difficulty
-      target += (emp.targets[f.key]||0);
-    }
+    if(val>0){ actual+=val; target+=(emp.targets[f.key]||0); }
   });
   if(target>0) return Math.min(Math.round((actual/target)*100),200);
-  if(actual>0) return 100;
+  if(actual>0) return 100; // data entered but no target set
   return 0;
 }
 
@@ -1272,8 +1213,12 @@ function getPerfRange() {
     return {from:ds,to:ds,label};
   }
   if(perfView==='week') {
-    const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
-    return {from:toLocalDateStr(mon),to:toLocalDateStr(now),label:'This Week'};
+    const dow = now.getDay(); // 0=Sun
+    const mon = new Date(now); mon.setDate(now.getDate()-((dow+6)%7)); // Monday
+    const fri = new Date(mon); fri.setDate(mon.getDate()+4); // Friday
+    // If we're before Friday, use today as end; after Friday use Friday
+    const end = now < fri ? now : fri;
+    return {from:toLocalDateStr(mon), to:toLocalDateStr(end), label:'This Week (Mon–Fri)'};
   }
   const from=new Date(yr,mo,1), to=new Date(yr,mo+1,0);
   return {from:toLocalDateStr(from),to:toLocalDateStr(to),label:from.toLocaleDateString('en-IN',{month:'long',year:'numeric'})};
@@ -1294,7 +1239,7 @@ function buildPerfMonthToggle() {
     btn.onclick=()=>{
       perfSelectedMonth=mo;
       updatePmtActive();
-      renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
+      renderTop3(); renderTeamKPI(); renderPerfTable(); renderFWP();
     };
     wrap.appendChild(btn);
   }
@@ -1318,7 +1263,7 @@ function renderPerfSummary() {
   });
   const dayRow = document.getElementById('perfDayToggleRow');
   if(dayRow) { dayRow.style.display='none'; }
-  renderTop3(); renderTeamKPI(); renderPerfTable(); renderHeatmap();
+  renderTop3(); renderTeamKPI(); renderPerfTable(); renderFWP();
 }
 
 // Count actual calendar working days (non-holiday weekdays) in range
@@ -1465,23 +1410,86 @@ function renderPerfTable() {
   wrap.innerHTML=`<table class="perf-table"><thead><tr><th>#</th><th>Employee</th><th>Performance (${label})</th><th>Tasks Done</th><th>Avg/Day</th><th>Active Days</th><th>Attendance</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function renderHeatmap() {
-  const wrap=document.getElementById('heatmapWrap'); if(!wrap) return;
-  const now=new Date();
-  const days=[];
-  for(let i=29;i>=0;i--){ const d=new Date(now); d.setDate(now.getDate()-i); days.push(toLocalDateStr(d)); }
-  const dateLbls=`<div class="heatmap-dates">${days.map((ds,i)=>{const d=new Date(ds.replace(/-/g,'/')); return `<div class="hm-date-lbl">${i%5===0?d.getDate():''}</div>`; }).join('')}</div>`;
-  const rows=employees.map(emp=>{
-    const maxT=Math.max(...days.map(ds=>{const e=(submissions[emp.id]||[]).find(s=>s.date===ds); return e?FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(e.fields[f.key])||0),0):0;}),1);
-    const cells=days.map(ds=>{
-      const e=(submissions[emp.id]||[]).find(s=>s.date===ds);
-      if(!e) return `<div class="hm-cell hm-0" title="${ds}${isHoliday(ds)?' (Holiday)':''}"></div>`;
-      const t=FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(e.fields[f.key])||0),0);
-      return `<div class="hm-cell hm-${Math.ceil((t/maxT)*4)}" title="${ds}: ${t} tasks"></div>`;
-    }).join('');
-    return `<div class="heatmap-emp-row"><div class="heatmap-emp-lbl" title="${emp.name}">${emp.name.split(' ')[0]}</div><div class="heatmap-cells">${cells}</div></div>`;
-  }).join('');
-  wrap.innerHTML=dateLbls+rows+`<div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:10px;color:var(--text3)">Less <div class="hm-cell hm-0" style="margin:0"></div><div class="hm-cell hm-1" style="margin:0"></div><div class="hm-cell hm-2" style="margin:0"></div><div class="hm-cell hm-3" style="margin:0"></div><div class="hm-cell hm-4" style="margin:0"></div> More</div>`;
+function renderFWP() {
+  const tbody = document.getElementById('fwpTableBody');
+  if(!tbody) return;
+  const {from, to} = getPerfRange();
+
+  // Get week range Mon-Fri only
+  function getWeekDates(fromD, toD) {
+    const dates = [];
+    const end = new Date(toD.replace(/-/g,'/'));
+    for(let d=new Date(fromD.replace(/-/g,'/')); d<=end; d.setDate(d.getDate()+1)) {
+      const dow = d.getDay();
+      if(dow>=1 && dow<=5) dates.push(toLocalDateStr(d)); // Mon-Fri only
+    }
+    return dates;
+  }
+
+  const validDates = perfView==='week' ? new Set(getWeekDates(from,to)) : null;
+
+  const rows = employees.map(emp => {
+    // Get submissions in range, filter Mon-Fri for week view
+    let subs = (submissions[emp.id]||[]).filter(s=>s.date>=from&&s.date<=to);
+    if(validDates) subs = subs.filter(s=>validDates.has(s.date));
+
+    const total = subs.reduce((a,s)=>
+      a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
+
+    // Process breakdown
+    const procs = calcProcessPerf(emp, from, to);
+    // Re-filter for week Mon-Fri
+    if(validDates && perfView==='week') {
+      Object.entries(PROCESS_GROUPS).forEach(([grpName, grp])=>{
+        const grpFields = FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
+        let actual=0, target=0;
+        subs.forEach(s=>{
+          grpFields.forEach(f=>{
+            const v=parseFloat(s.fields?.[f.key])||0;
+            if(v>0){ actual+=v; target+=(emp.targets[f.key]||0); }
+          });
+        });
+        const pct=target>0?Math.min(Math.round((actual/target)*100),200):0;
+        procs[grpName]={...procs[grpName],actual,pct};
+      });
+    }
+
+    const activeProcHtml = Object.entries(procs)
+      .filter(([,p])=>p.actual>0)
+      .map(([name,p])=>{
+        const bg = p.pct>=100?'rgba(16,185,129,0.1)':p.pct>=60?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
+        const border = p.pct>=100?'#6ee7b7':p.pct>=60?'#fcd34d':'#fca5a5';
+        const col = p.pct>=100?'#065f46':p.pct>=60?'#78350f':'#991b1b';
+        return `<span class="fwp-proc-pill" style="background:${bg};border-color:${border};color:${col}">
+          ${p.icon} ${name}
+          <b>${p.actual}</b>
+          <span style="opacity:0.7">${p.pct}%</span>
+        </span>`;
+      }).join('') || `<span style="color:var(--text3);font-size:11px">No data</span>`;
+
+    const ph = emp.imageUrl
+      ? `<img class="fwp-mini-img" src="${emp.imageUrl}" onerror="this.outerHTML='<div class=fwp-mini-ph>${emp.name[0]}</div>'">`
+      : `<div class="fwp-mini-ph">${emp.name[0]}</div>`;
+
+    return `<tr>
+      <td>
+        <div class="fwp-emp-cell">
+          ${ph}
+          <div>
+            <div style="font-weight:700;font-size:13px">${emp.name}</div>
+            <div style="font-size:10px;color:var(--text3)">${emp.desig}</div>
+          </div>
+        </div>
+      </td>
+      <td>
+        <div class="fwp-total">${total.toLocaleString()}</div>
+        <div class="fwp-total-lbl">tasks</div>
+      </td>
+      <td><div class="fwp-processes">${activeProcHtml}</div></td>
+    </tr>`;
+  });
+
+  tbody.innerHTML = rows.join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -1644,9 +1652,6 @@ function parseSubmissionsInto(csv, target) {
     if(!target[empId]) target[empId]=[];
     const entry = {date, fields:{}};
     FIELDS.forEach((f,idx) => { entry.fields[f.key] = f.type==='text' ? (c[idx+3]||'') : (parseFloat(c[idx+3])||0); });
-    // difficulty column comes after all fields + others + comment
-    const diffColIdx = 3 + FIELDS.length + 2; // empId,empName,date + fields + others + comment
-    entry.difficulty = c[diffColIdx] || '1.0';
     // avoid duplicates by date
     if(!target[empId].find(e=>e.date===date)) target[empId].push(entry);
   }
@@ -1784,8 +1789,6 @@ function loadTargets(emp) {
   const comment = document.getElementById('f_comment');
   if(others)  others.value  = '';
   if(comment) comment.value = '';
-  const diff = document.getElementById('f_difficulty');
-  if(diff) { diff.value = '1.0'; onDifficultyChange(); }
 }
 
 // ═══════════════════════════════════════════════
@@ -1794,24 +1797,11 @@ function loadTargets(emp) {
 function submitEntry() {
   if(!currentEmp) return;
 
-  const difficulty = document.getElementById('f_difficulty')?.value || '1.0';
-  const comment    = document.getElementById('f_comment')?.value.trim() || '';
-
-  // Validate: comment mandatory for non-Normal difficulty
-  if(difficulty !== '1.0' && !comment) {
-    const errEl = document.getElementById('commentErr');
-    if(errEl) errEl.style.display = 'block';
-    document.getElementById('f_comment')?.focus();
-    showToast('⚠ Please add a comment explaining the difficulty', 'warn');
-    return;
-  }
-
   const entry = {
-    date:       todayStr,
-    fields:     {},
-    difficulty: difficulty,
-    others:     document.getElementById('f_others')?.value||'',
-    comment:    comment
+    date:    todayStr,
+    fields:  {},
+    others:  document.getElementById('f_others')?.value||'',
+    comment: document.getElementById('f_comment')?.value||''
   };
   FIELDS.forEach(f => {
     const el = document.getElementById(f.inp);
@@ -1865,7 +1855,7 @@ async function pushToSheet(emp, entry) {
     await fetch(url, {
       method:'POST', mode:'no-cors',
       headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({empId:emp.id, empName:emp.name, date:entry.date, fields:entry.fields, others:entry.others, comment:entry.comment, difficulty:entry.difficulty||'1.0'})
+      body: JSON.stringify({empId:emp.id, empName:emp.name, date:entry.date, fields:entry.fields, others:entry.others, comment:entry.comment})
     });
     showToast('✓ Submitted to Google Sheet', 'ok');
   } catch(e){
@@ -2610,9 +2600,7 @@ function buildDayToggles(emp, subs) {
       return;
     }
     const total = FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(parseFloat(day.entry.fields[f.key])||0),0);
-    const perf = calcDayPerf(day.entry, emp); // applies difficulty multiplier
-    const diff = day.entry.difficulty || '1.0';
-    const diffInfo = DIFF_LABELS[diff] || DIFF_LABELS['1.0'];
+    const perf = calcDayPerf(day.entry, emp); // only entered fields vs their targets
     const rows = FIELDS.filter(f=>(day.entry.fields[f.key]||0)>0)
       .map(f=>`<div class="wt-row"><span class="wt-name">${f.lbl}</span><span class="wt-count">${day.entry.fields[f.key]}</span></div>`).join('');
     panel.innerHTML=`
@@ -2788,8 +2776,13 @@ function moTotal(subs, ago) {
     <div class="perf-table-wrap" id="perfTableWrap"></div>
 
     <!-- Day-wise Heatmap -->
-    <div class="perf-section-title" style="margin-top:28px">🗓 Activity Heatmap — Last 30 Days</div>
-    <div class="heatmap-wrap" id="heatmapWrap"></div>
+    <div class="perf-section-title" style="margin-top:28px">📊 Field-wise Productivity</div>
+    <div class="fwp-wrap">
+      <table class="fwp-table">
+        <thead><tr><th>Employee</th><th>Total Count</th><th>Process-wise Breakdown</th></tr></thead>
+        <tbody id="fwpTableBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 </body>
