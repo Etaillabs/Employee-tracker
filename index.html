@@ -1107,7 +1107,7 @@ function calcProcessPerf(emp, fromDate, toDate) {
       });
       if(dayActual>0){ actualTotal+=dayActual; targetTotal+=dayTarget; daysWorked++; }
     });
-    const pct=targetTotal>0?Math.min(Math.round((actualTotal/targetTotal)*100),200):0;
+    const pct=targetTotal>0?Math.min(Math.round((actualTotal/targetTotal)*100),100):0; // cap at 100%
     result[grpName]={actual:actualTotal,target:targetTotal,pct,daysWorked,color:grp.color,icon:grp.icon};
   });
   return result;
@@ -1138,12 +1138,12 @@ function getEmpScoreData(emp) {
   // Per-day performance: for each submitted day, compare actual vs target
   // Only for fields where emp entered > 0 that day
   // Performance = sum(actual fields) / sum(target of those same fields) per day, averaged
-  // Use calcDayPerf (sum-of-field-% method) for each day
+  // Performance = avg of submitted days only, NO attendance factor
+  // Attendance tracked separately via attPct
   const avgDayPerf = submittedDays>0
     ? subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/submittedDays
     : 0;
-  const attFactor = submittedDays/calWorkDays;
-  const perf = submittedDays===0 ? 0 : Math.min(Math.round(avgDayPerf*attFactor),200);
+  const perf = Math.min(Math.round(avgDayPerf), 100); // cap at 100%
 
   const avgPerDay=submittedDays>0?Math.round(total/submittedDays):0;
   const {cycleStart,cycleEnd}=getETCycle();
@@ -1155,19 +1155,20 @@ function getEmpScoreData(emp) {
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
 function calcDayPerf(entry, emp) {
-  // Each worked field gets its own % → sum all field %s → cap 200
-  // eg: Graphics 40/80=50% + Production 5/10=50% → total 100%
+  // Each field: min(actual/target, 1) × 100 → capped at 100% per field
+  // Sum all field %s → cap total at 100%
+  // No attendance factor — pure task achievement only
   if(!entry) return 0;
   let perfSum = 0;
   FIELDS.filter(f=>f.type!=='text').forEach(f=>{
     const val = parseFloat(entry.fields[f.key])||0;
     if(val > 0) {
       const tgt = emp.targets[f.key]||0;
-      if(tgt > 0) perfSum += (val/tgt)*100;
-      else perfSum += 100; // no target set → count as 100%
+      if(tgt > 0) perfSum += Math.min((val/tgt)*100, 100); // cap per field at 100%
+      else perfSum += 100; // no target set → 100%
     }
   });
-  return Math.min(Math.round(perfSum), 200);
+  return Math.min(Math.round(perfSum), 100); // cap day total at 100%
 }
 
 // Calculate performance% for a date range
@@ -1175,11 +1176,10 @@ function calcDayPerf(entry, emp) {
 function calcRangePerf(emp, fromDate, toDate) {
   const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
   if(!subs.length) return 0;
-  const calWorkDays=Math.max(countWorkingDays(fromDate,toDate),1);
-  // Average daily perf (each day uses sum-of-field-% method) × attendance factor
+  // Pure task achievement — average of submitted days only
+  // Attendance is tracked separately, NOT mixed into performance
   const avgDayPerf=subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/subs.length;
-  const attFactor=subs.length/calWorkDays;
-  return Math.min(Math.round(avgDayPerf*attFactor),200);
+  return Math.min(Math.round(avgDayPerf), 100); // cap at 100%
 }
 
 function getPerfRange() {
@@ -1461,9 +1461,7 @@ function renderFWP() {
     const total=subs.reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
     const dayPerfs=subs.map(s=>calcDayPerf(s,emp));
     const avgPerf=dayPerfs.length?Math.round(dayPerfs.reduce((a,b)=>a+b,0)/dayPerfs.length):0;
-    const calWD=Math.max(countWorkingDays(from,to),1);
-    const attF=subs.length/calWD;
-    const rangePerf=Math.min(Math.round(avgPerf*attF),200);
+    const rangePerf=Math.min(avgPerf, 100); // pure task achievement, no attendance factor
     const perfColor=rangePerf>=100?'#10b981':rangePerf>=60?'#f59e0b':'#ef4444';
 
     // Process breakdown
@@ -1482,7 +1480,7 @@ function renderFWP() {
         });
       });
       if(!grpActual) return null;
-      const grpPct=Math.min(Math.round(grpPerfSum),200);
+      const grpPct=Math.min(Math.round(grpPerfSum),100); // cap process % at 100%
       const bg=grpPct>=100?'rgba(16,185,129,0.1)':grpPct>=60?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
       const border=grpPct>=100?'#6ee7b7':grpPct>=60?'#fcd34d':'#fca5a5';
       const col=grpPct>=100?'#065f46':grpPct>=60?'#78350f':'#991b1b';
