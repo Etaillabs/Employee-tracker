@@ -589,32 +589,21 @@ textarea { resize:vertical; min-height:68px; line-height:1.5; }
 
 /* Heatmap */
 /* heatmap removed */
-
 /* Field-wise Productivity */
 .fwp-wrap { background:#fff; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(30,27,75,0.08); }
 .fwp-table { width:100%; border-collapse:collapse; font-size:13px; }
 .fwp-table th { background:linear-gradient(135deg,#4f46e5,#6366f1); color:#fff; padding:11px 16px; text-align:left; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; }
-.fwp-table td { padding:10px 16px; border-bottom:1px solid var(--border); vertical-align:top; }
+.fwp-table td { padding:10px 16px; border-bottom:1px solid var(--border); vertical-align:middle; }
 .fwp-table tr:last-child td { border-bottom:none; }
 .fwp-table tr:hover td { background:rgba(79,70,229,0.02); }
-.fwp-emp-cell { display:flex; align-items:center; gap:8px; }
+.fwp-emp-cell { display:flex; align-items:center; gap:10px; }
 .fwp-mini-ph { width:30px; height:38px; border-radius:5px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; color:var(--accent); font-family:'Poppins',sans-serif; flex-shrink:0; }
 .fwp-mini-img { width:30px; height:38px; border-radius:5px; object-fit:cover; flex-shrink:0; }
 .fwp-total { font-family:'Poppins',sans-serif; font-size:20px; font-weight:800; color:var(--text); }
 .fwp-total-lbl { font-size:10px; color:var(--text3); font-weight:500; }
+.fwp-perf { font-size:13px; font-weight:700; margin-top:2px; }
 .fwp-processes { display:flex; flex-wrap:wrap; gap:5px; }
-.fwp-proc-pill {
-  display:inline-flex; align-items:center; gap:5px;
-  padding:4px 10px; border-radius:7px; font-size:11px; font-weight:600;
-  border:1px solid transparent;
-}
-.hm-0 { background:rgba(99,102,145,0.08); }
-.hm-1 { background:#c7d2fe; }
-.hm-2 { background:#818cf8; }
-.hm-3 { background:#4f46e5; }
-.hm-4 { background:#3730a3; }
-.heatmap-dates { display:flex; gap:3px; margin-left:118px; margin-bottom:6px; }
-.hm-date-lbl { width:18px; font-size:8px; color:var(--text3); text-align:center; flex-shrink:0; }
+.fwp-proc-pill { display:inline-flex; align-items:center; gap:5px; padding:4px 10px; border-radius:7px; font-size:11px; font-weight:600; border:1px solid transparent; }
 
 /* PDF button */
 .btn-pdf {
@@ -1149,25 +1138,12 @@ function getEmpScoreData(emp) {
   // Per-day performance: for each submitted day, compare actual vs target
   // Only for fields where emp entered > 0 that day
   // Performance = sum(actual fields) / sum(target of those same fields) per day, averaged
-  let totalPerfPct=0;
-  subs.forEach(s=>{
-    let dayActual=0, dayTarget=0;
-    FIELDS.filter(f=>f.type!=='text').forEach(f=>{
-      const val=parseFloat(s.fields[f.key])||0;
-      if(val>0){
-        dayActual+=val;
-        dayTarget+=(emp.targets[f.key]||0);
-      }
-    });
-    if(dayTarget>0) totalPerfPct+=(dayActual/dayTarget)*100;
-    else if(dayActual>0) totalPerfPct+=100; // entered data but no target set
-  });
-
-  // Average daily performance × attendance factor
-  const avgDayPerf = submittedDays>0 ? totalPerfPct/submittedDays : 0;
-  // If no submissions → perf = 0 (don't rank as top performer)
+  // Use calcDayPerf (sum-of-field-% method) for each day
+  const avgDayPerf = submittedDays>0
+    ? subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/submittedDays
+    : 0;
   const attFactor = submittedDays/calWorkDays;
-  const perf = submittedDays===0 ? 0 : Math.min(Math.round(avgDayPerf * attFactor), 200);
+  const perf = submittedDays===0 ? 0 : Math.min(Math.round(avgDayPerf*attFactor),200);
 
   const avgPerDay=submittedDays>0?Math.round(total/submittedDays):0;
   const {cycleStart,cycleEnd}=getETCycle();
@@ -1179,15 +1155,19 @@ function getEmpScoreData(emp) {
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
 function calcDayPerf(entry, emp) {
+  // Each worked field gets its own % → sum all field %s → cap 200
+  // eg: Graphics 40/80=50% + Production 5/10=50% → total 100%
   if(!entry) return 0;
-  let actual=0, target=0;
+  let perfSum = 0;
   FIELDS.filter(f=>f.type!=='text').forEach(f=>{
-    const val=parseFloat(entry.fields[f.key])||0;
-    if(val>0){ actual+=val; target+=(emp.targets[f.key]||0); }
+    const val = parseFloat(entry.fields[f.key])||0;
+    if(val > 0) {
+      const tgt = emp.targets[f.key]||0;
+      if(tgt > 0) perfSum += (val/tgt)*100;
+      else perfSum += 100; // no target set → count as 100%
+    }
   });
-  if(target>0) return Math.min(Math.round((actual/target)*100),200);
-  if(actual>0) return 100; // data entered but no target set
-  return 0;
+  return Math.min(Math.round(perfSum), 200);
 }
 
 // Calculate performance% for a date range
@@ -1196,8 +1176,8 @@ function calcRangePerf(emp, fromDate, toDate) {
   const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
   if(!subs.length) return 0;
   const calWorkDays=Math.max(countWorkingDays(fromDate,toDate),1);
-  const totalPct=subs.reduce((a,s)=>a+calcDayPerf(s,emp),0);
-  const avgDayPerf=totalPct/subs.length;
+  // Average daily perf (each day uses sum-of-field-% method) × attendance factor
+  const avgDayPerf=subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/subs.length;
   const attFactor=subs.length/calWorkDays;
   return Math.min(Math.round(avgDayPerf*attFactor),200);
 }
@@ -1213,12 +1193,8 @@ function getPerfRange() {
     return {from:ds,to:ds,label};
   }
   if(perfView==='week') {
-    const dow = now.getDay(); // 0=Sun
-    const mon = new Date(now); mon.setDate(now.getDate()-((dow+6)%7)); // Monday
-    const fri = new Date(mon); fri.setDate(mon.getDate()+4); // Friday
-    // If we're before Friday, use today as end; after Friday use Friday
-    const end = now < fri ? now : fri;
-    return {from:toLocalDateStr(mon), to:toLocalDateStr(end), label:'This Week (Mon–Fri)'};
+    const mon = new Date(now); mon.setDate(now.getDate()-((now.getDay()+6)%7));
+    return {from:toLocalDateStr(mon),to:toLocalDateStr(now),label:'This Week'};
   }
   const from=new Date(yr,mo,1), to=new Date(yr,mo+1,0);
   return {from:toLocalDateStr(from),to:toLocalDateStr(to),label:from.toLocaleDateString('en-IN',{month:'long',year:'numeric'})};
@@ -1410,86 +1386,125 @@ function renderPerfTable() {
   wrap.innerHTML=`<table class="perf-table"><thead><tr><th>#</th><th>Employee</th><th>Performance (${label})</th><th>Tasks Done</th><th>Avg/Day</th><th>Active Days</th><th>Attendance</th><th>Rating</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-function renderFWP() {
-  const tbody = document.getElementById('fwpTableBody');
-  if(!tbody) return;
-  const {from, to} = getPerfRange();
+// ── Field-wise Productivity state ──
+let fwpView = 'month';
+let fwpSelectedDay = null;
 
-  // Get week range Mon-Fri only
-  function getWeekDates(fromD, toD) {
-    const dates = [];
-    const end = new Date(toD.replace(/-/g,'/'));
-    for(let d=new Date(fromD.replace(/-/g,'/')); d<=end; d.setDate(d.getDate()+1)) {
-      const dow = d.getDay();
-      if(dow>=1 && dow<=5) dates.push(toLocalDateStr(d)); // Mon-Fri only
+function setFWPView(view, btn) {
+  fwpView = view;
+  ['fwpBtnMonth','fwpBtnWeek','fwpBtnDay'].forEach(id=>{ const b=document.getElementById(id); if(b) b.classList.remove('active'); });
+  if(btn) btn.classList.add('active');
+  const dw = document.getElementById('fwpDayPickerWrap');
+  if(dw) { dw.style.display = view==='day'?'flex':'none'; if(view==='day') buildFWPDayPicker(); }
+  renderFWP();
+}
+
+function buildFWPDayPicker() {
+  const wrap = document.getElementById('fwpDayPickerWrap'); if(!wrap) return;
+  const now = new Date(); const days = [];
+  for(let i=0; days.length<10&&i<20; i++) {
+    const d=new Date(now); d.setDate(now.getDate()-i);
+    const ds=toLocalDateStr(d);
+    if(!isHoliday(ds)) days.push({ds,dt:new Date(d)});
+  }
+  if(!fwpSelectedDay) fwpSelectedDay = days[0]?.ds;
+  wrap.innerHTML='';
+  days.forEach(day=>{
+    const btn=document.createElement('button');
+    btn.className='day-tog'; btn.dataset.ds=day.ds;
+    btn.textContent=day.dt.toLocaleDateString('en-IN',{day:'numeric',month:'short'});
+    const active=day.ds===fwpSelectedDay;
+    btn.style.cssText=`padding:5px 11px;border-radius:7px;border:1px solid rgba(79,70,229,0.25);font-size:11px;font-weight:600;cursor:pointer;font-family:Poppins,sans-serif;transition:all .15s;background:${active?'#4f46e5':'rgba(79,70,229,0.08)'};color:${active?'#fff':'#4f46e5'};`;
+    btn.addEventListener('click',()=>{ fwpSelectedDay=day.ds; buildFWPDayPicker(); renderFWP(); });
+    wrap.appendChild(btn);
+  });
+}
+
+function getFWPRange() {
+  const now=new Date();
+  if(fwpView==='day') {
+    const ds=fwpSelectedDay||toLocalDateStr(now);
+    const dt=new Date(ds.replace(/-/g,'/'));
+    return {from:ds,to:ds,label:dt.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})};
+  }
+  if(fwpView==='week') {
+    const dow=now.getDay();
+    const mon=new Date(now); mon.setDate(now.getDate()-((dow+6)%7));
+    const fri=new Date(mon); fri.setDate(mon.getDate()+4);
+    const end=now<fri?now:fri;
+    return {from:toLocalDateStr(mon),to:toLocalDateStr(end),label:'This Week (Mon–Fri)'};
+  }
+  const mo=perfSelectedMonth!==null?perfSelectedMonth:now.getMonth();
+  const yr=now.getFullYear();
+  const from=new Date(yr,mo,1); const to=new Date(yr,mo+1,0);
+  return {from:toLocalDateStr(from),to:toLocalDateStr(to),label:from.toLocaleDateString('en-IN',{month:'long',year:'numeric'})};
+}
+
+function renderFWP() {
+  const tbody=document.getElementById('fwpTableBody'); if(!tbody) return;
+  const {from,to,label}=getFWPRange();
+
+  function getWeekDates(f,t){
+    const dates=[];
+    const end=new Date(t.replace(/-/g,'/'));
+    for(let d=new Date(f.replace(/-/g,'/')); d<=end; d.setDate(d.getDate()+1)){
+      const dow=d.getDay(); if(dow>=1&&dow<=5) dates.push(toLocalDateStr(d));
     }
     return dates;
   }
+  const validDates=fwpView==='week'?new Set(getWeekDates(from,to)):null;
 
-  const validDates = perfView==='week' ? new Set(getWeekDates(from,to)) : null;
+  const rows=employees.map(emp=>{
+    let subs=(submissions[emp.id]||[]).filter(s=>s.date>=from&&s.date<=to);
+    if(validDates) subs=subs.filter(s=>validDates.has(s.date));
 
-  const rows = employees.map(emp => {
-    // Get submissions in range, filter Mon-Fri for week view
-    let subs = (submissions[emp.id]||[]).filter(s=>s.date>=from&&s.date<=to);
-    if(validDates) subs = subs.filter(s=>validDates.has(s.date));
-
-    const total = subs.reduce((a,s)=>
-      a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
+    const total=subs.reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
+    const dayPerfs=subs.map(s=>calcDayPerf(s,emp));
+    const avgPerf=dayPerfs.length?Math.round(dayPerfs.reduce((a,b)=>a+b,0)/dayPerfs.length):0;
+    const calWD=Math.max(countWorkingDays(from,to),1);
+    const attF=subs.length/calWD;
+    const rangePerf=Math.min(Math.round(avgPerf*attF),200);
+    const perfColor=rangePerf>=100?'#10b981':rangePerf>=60?'#f59e0b':'#ef4444';
 
     // Process breakdown
-    const procs = calcProcessPerf(emp, from, to);
-    // Re-filter for week Mon-Fri
-    if(validDates && perfView==='week') {
-      Object.entries(PROCESS_GROUPS).forEach(([grpName, grp])=>{
-        const grpFields = FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
-        let actual=0, target=0;
-        subs.forEach(s=>{
-          grpFields.forEach(f=>{
-            const v=parseFloat(s.fields?.[f.key])||0;
-            if(v>0){ actual+=v; target+=(emp.targets[f.key]||0); }
-          });
+    const procRows=Object.entries(PROCESS_GROUPS||{}).map(([grpName,grp])=>{
+      const grpFields=FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
+      let grpActual=0, grpPerfSum=0, grpWorked=0;
+      subs.forEach(s=>{
+        grpFields.forEach(f=>{
+          const v=parseFloat(s.fields?.[f.key])||0;
+          if(v>0){
+            grpActual+=v;
+            const tgt=emp.targets[f.key]||0;
+            grpPerfSum+=tgt>0?(v/tgt)*100:100;
+            grpWorked++;
+          }
         });
-        const pct=target>0?Math.min(Math.round((actual/target)*100),200):0;
-        procs[grpName]={...procs[grpName],actual,pct};
       });
-    }
+      if(!grpActual) return null;
+      const grpPct=Math.min(Math.round(grpPerfSum),200);
+      const bg=grpPct>=100?'rgba(16,185,129,0.1)':grpPct>=60?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
+      const border=grpPct>=100?'#6ee7b7':grpPct>=60?'#fcd34d':'#fca5a5';
+      const col=grpPct>=100?'#065f46':grpPct>=60?'#78350f':'#991b1b';
+      return `<span class="fwp-proc-pill" style="background:${bg};border-color:${border};color:${col}">
+        ${grp.icon} ${grpName} <b>${grpActual}</b> <span style="opacity:.75">${grpPct}%</span>
+      </span>`;
+    }).filter(Boolean).join('');
 
-    const activeProcHtml = Object.entries(procs)
-      .filter(([,p])=>p.actual>0)
-      .map(([name,p])=>{
-        const bg = p.pct>=100?'rgba(16,185,129,0.1)':p.pct>=60?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
-        const border = p.pct>=100?'#6ee7b7':p.pct>=60?'#fcd34d':'#fca5a5';
-        const col = p.pct>=100?'#065f46':p.pct>=60?'#78350f':'#991b1b';
-        return `<span class="fwp-proc-pill" style="background:${bg};border-color:${border};color:${col}">
-          ${p.icon} ${name}
-          <b>${p.actual}</b>
-          <span style="opacity:0.7">${p.pct}%</span>
-        </span>`;
-      }).join('') || `<span style="color:var(--text3);font-size:11px">No data</span>`;
-
-    const ph = emp.imageUrl
-      ? `<img class="fwp-mini-img" src="${emp.imageUrl}" onerror="this.outerHTML='<div class=fwp-mini-ph>${emp.name[0]}</div>'">`
-      : `<div class="fwp-mini-ph">${emp.name[0]}</div>`;
+    const ph=emp.imageUrl
+      ?`<img class="fwp-mini-img" src="${emp.imageUrl}" onerror="this.outerHTML='<div class=fwp-mini-ph>${emp.name[0]}</div>'">`
+      :`<div class="fwp-mini-ph">${emp.name[0]}</div>`;
 
     return `<tr>
-      <td>
-        <div class="fwp-emp-cell">
-          ${ph}
-          <div>
-            <div style="font-weight:700;font-size:13px">${emp.name}</div>
-            <div style="font-size:10px;color:var(--text3)">${emp.desig}</div>
-          </div>
-        </div>
-      </td>
+      <td><div class="fwp-emp-cell">${ph}<div><div style="font-weight:700;font-size:13px">${emp.name}</div><div style="font-size:10px;color:var(--text3)">${emp.desig}</div></div></div></td>
       <td>
         <div class="fwp-total">${total.toLocaleString()}</div>
-        <div class="fwp-total-lbl">tasks</div>
+        <div class="fwp-perf" style="color:${perfColor}">${rangePerf}%</div>
       </td>
-      <td><div class="fwp-processes">${activeProcHtml}</div></td>
+      <td><div class="fwp-processes">${procRows||'<span style="color:var(--text3);font-size:11px">No data for ${label}</span>'}</div></td>
     </tr>`;
   });
-
-  tbody.innerHTML = rows.join('');
+  tbody.innerHTML=rows.join('');
 }
 
 // ═══════════════════════════════════════════════
@@ -2776,10 +2791,18 @@ function moTotal(subs, ago) {
     <div class="perf-table-wrap" id="perfTableWrap"></div>
 
     <!-- Day-wise Heatmap -->
-    <div class="perf-section-title" style="margin-top:28px">📊 Field-wise Productivity</div>
+    <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:12px;margin-top:28px;margin-bottom:14px;">
+      <div class="perf-section-title" style="margin-bottom:0">📊 Field-wise Productivity</div>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <button class="perf-tab-btn active" id="fwpBtnMonth" onclick="setFWPView('month',this)">Monthly</button>
+        <button class="perf-tab-btn" id="fwpBtnWeek"  onclick="setFWPView('week',this)">Weekly</button>
+        <button class="perf-tab-btn" id="fwpBtnDay"   onclick="setFWPView('day',this)">Date-wise</button>
+        <div id="fwpDayPickerWrap" style="display:none;flex-wrap:wrap;gap:5px"></div>
+      </div>
+    </div>
     <div class="fwp-wrap">
       <table class="fwp-table">
-        <thead><tr><th>Employee</th><th>Total Count</th><th>Process-wise Breakdown</th></tr></thead>
+        <thead><tr><th style="width:200px">Employee</th><th style="width:140px">Total Count / Perf%</th><th>Process-wise Breakdown</th></tr></thead>
         <tbody id="fwpTableBody"></tbody>
       </table>
     </div>
