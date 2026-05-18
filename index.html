@@ -1150,7 +1150,7 @@ function getEmpScoreData(emp) {
   const att=getCycleAttendance(emp.id,cycleStart,cycleEnd);
   const attPct=att.workdays>0?Math.round((att.present/att.workdays)*100):0;
   const dailyTgt=FIELDS.filter(f=>f.type!=='text').reduce((a,f)=>a+(emp.targets[f.key]||0),0);
-  return {total,workDays:submittedDays,calWorkDays,perf,avgDayPerf:Math.round(avgDayPerf),avgPerDay,attPct,dailyTgt};
+  return {total,workDays:submittedDays,calWorkDays,perf,avgDayPerf:avgPerDay,avgPerDay,attPct,dailyTgt};
 }
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
