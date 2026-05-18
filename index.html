@@ -1092,37 +1092,41 @@ const PROCESS_GROUPS = {
   'Meta & SEO':   {keys:['meta_title','meta_long','meta_qc','meta_html','decann','landmark'], color:'#8b5cf6', icon:'📝'},
 };
 
-// Calculate per-process performance for one emp over a date range
+// ── UNIFIED PERFORMANCE CALCULATION ──
+// Process-based: sum actual vs sum target per process group over date range
+// Overall = average of active process %s, capped at 100%
+// NO attendance factor — performance and attendance are separate
+
 function calcProcessPerf(emp, fromDate, toDate) {
   const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
   const result={};
   Object.entries(PROCESS_GROUPS).forEach(([grpName, grp])=>{
     const grpFields=FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
-    let actualTotal=0, targetTotal=0, daysWorked=0;
+    let actualTotal=0, targetTotal=0;
     subs.forEach(s=>{
-      let dayActual=0, dayTarget=0;
       grpFields.forEach(f=>{
         const val=parseFloat(s.fields?.[f.key])||0;
-        if(val>0){ dayActual+=val; dayTarget+=(emp.targets[f.key]||0); }
+        if(val>0){
+          actualTotal+=val;
+          targetTotal+=(emp.targets[f.key]||0);
+        }
       });
-      if(dayActual>0){ actualTotal+=dayActual; targetTotal+=dayTarget; daysWorked++; }
     });
-    const pct=targetTotal>0?Math.min(Math.round((actualTotal/targetTotal)*100),100):0; // cap at 100%
-    result[grpName]={actual:actualTotal,target:targetTotal,pct,daysWorked,color:grp.color,icon:grp.icon};
+    // Cap each process at 100%
+    const pct = targetTotal>0 ? Math.min(Math.round((actualTotal/targetTotal)*100),100) : (actualTotal>0?100:0);
+    result[grpName]={actual:actualTotal,target:targetTotal,pct,color:grp.color,icon:grp.icon};
   });
   return result;
 }
 
-// Overall perf = weighted avg of active process groups
-function calcOverallPerfFromProcesses(emp, fromDate, toDate) {
+// Overall = average % of active processes, cap 100%
+// This is the SINGLE source of truth for all performance displays
+function calcOverallPerf(emp, fromDate, toDate) {
   const procs=calcProcessPerf(emp,fromDate,toDate);
   const active=Object.values(procs).filter(p=>p.actual>0);
   if(!active.length) return 0;
-  const calWorkDays=Math.max(countWorkingDays(fromDate,toDate),1);
-  const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate).length;
-  const avgPct=active.reduce((a,p)=>a+p.pct,0)/active.length;
-  const attFactor=subs/calWorkDays;
-  return Math.min(Math.round(avgPct*attFactor),200);
+  const avg=active.reduce((a,p)=>a+p.pct,0)/active.length;
+  return Math.min(Math.round(avg),100);
 }
 
 function getEmpScoreData(emp) {
@@ -1138,12 +1142,8 @@ function getEmpScoreData(emp) {
   // Per-day performance: for each submitted day, compare actual vs target
   // Only for fields where emp entered > 0 that day
   // Performance = sum(actual fields) / sum(target of those same fields) per day, averaged
-  // Performance = avg of submitted days only, NO attendance factor
-  // Attendance tracked separately via attPct
-  const avgDayPerf = submittedDays>0
-    ? subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/submittedDays
-    : 0;
-  const perf = Math.min(Math.round(avgDayPerf), 100); // cap at 100%
+  // Performance = process-based overall (same formula everywhere)
+  const perf = calcOverallPerf(emp, from, to);
 
   const avgPerDay=submittedDays>0?Math.round(total/submittedDays):0;
   const {cycleStart,cycleEnd}=getETCycle();
@@ -1155,31 +1155,26 @@ function getEmpScoreData(emp) {
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
 function calcDayPerf(entry, emp) {
-  // Each field: min(actual/target, 1) × 100 → capped at 100% per field
-  // Sum all field %s → cap total at 100%
-  // No attendance factor — pure task achievement only
+  // Used for single-day views (day toggle panels)
+  // Uses process-group logic: avg of active processes for that day
   if(!entry) return 0;
-  let perfSum = 0;
-  FIELDS.filter(f=>f.type!=='text').forEach(f=>{
-    const val = parseFloat(entry.fields[f.key])||0;
-    if(val > 0) {
-      const tgt = emp.targets[f.key]||0;
-      if(tgt > 0) perfSum += Math.min((val/tgt)*100, 100); // cap per field at 100%
-      else perfSum += 100; // no target set → 100%
-    }
-  });
-  return Math.min(Math.round(perfSum), 100); // cap day total at 100%
+  const ds = entry.date;
+  const dayEntry = {date:ds, fields:entry.fields};
+  // Build a fake single-day submission array and use calcProcessPerf
+  const fakeSubs=[entry];
+  const savedSubs=submissions[emp.id];
+  submissions[emp.id]=fakeSubs;
+  const procs=calcProcessPerf(emp,ds,ds);
+  submissions[emp.id]=savedSubs;
+  const active=Object.values(procs).filter(p=>p.actual>0);
+  if(!active.length) return 0;
+  return Math.min(Math.round(active.reduce((a,p)=>a+p.pct,0)/active.length),100);
 }
 
 // Calculate performance% for a date range
 // Each submitted day: calcDayPerf, then average × attendance factor
 function calcRangePerf(emp, fromDate, toDate) {
-  const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
-  if(!subs.length) return 0;
-  // Pure task achievement — average of submitted days only
-  // Attendance is tracked separately, NOT mixed into performance
-  const avgDayPerf=subs.reduce((a,s)=>a+calcDayPerf(s,emp),0)/subs.length;
-  return Math.min(Math.round(avgDayPerf), 100); // cap at 100%
+  return calcOverallPerf(emp, fromDate, toDate);
 }
 
 function getPerfRange() {
@@ -1259,7 +1254,9 @@ function renderTop3() {
   const scored=employees.map(emp=>{
     const s=getEmpScoreData(emp);
     const procs=calcProcessPerf(emp,from,to);
-    return {emp,...s,procs};
+    // Use calcOverallPerf directly — same as FWP and Individual table
+    const overallPerf=calcOverallPerf(emp,from,to);
+    return {emp,...s,perf:overallPerf,procs};
   }).sort((a,b)=>b.perf-a.perf).slice(0,3);
 
   const badges=['🥇','🥈','🥉'], rankClass=['rank-1','rank-2','rank-3'];
@@ -1301,7 +1298,7 @@ function renderTeamKPI() {
   const teamTotal=totals.reduce((a,b)=>a+b,0);
   const avgPerf=perfs.length?Math.round(perfs.reduce((a,b)=>a+b,0)/perfs.length):0;
   // Top performer = same logic as Top3 (perf% based, not count based)
-  const perfScored=employees.map(e=>({e,...getEmpScoreData(e)})).sort((a,b)=>b.perf-a.perf);
+  const perfScored=employees.map(e=>({e,perf:calcOverallPerf(e,from,to)})).sort((a,b)=>b.perf-a.perf);
   const topPerformer=perfScored[0];
   const activeCount=totals.filter(t=>t>0).length;
   const {cycleStart,cycleEnd}=getETCycle();
@@ -1459,33 +1456,35 @@ function renderFWP() {
     if(validDates) subs=subs.filter(s=>validDates.has(s.date));
 
     const total=subs.reduce((a,s)=>a+FIELDS.filter(f=>f.type!=='text').reduce((x,f)=>x+(parseFloat(s.fields[f.key])||0),0),0);
-    const dayPerfs=subs.map(s=>calcDayPerf(s,emp));
-    const avgPerf=dayPerfs.length?Math.round(dayPerfs.reduce((a,b)=>a+b,0)/dayPerfs.length):0;
-    const rangePerf=Math.min(avgPerf, 100); // pure task achievement, no attendance factor
+    const rangePerf=calcOverallPerf(emp,from,to); // unified calc
     const perfColor=rangePerf>=100?'#10b981':rangePerf>=60?'#f59e0b':'#ef4444';
 
-    // Process breakdown
+    // Process breakdown — using same per-day logic as calcDayPerf for consistency
     const procRows=Object.entries(PROCESS_GROUPS||{}).map(([grpName,grp])=>{
       const grpFields=FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
-      let grpActual=0, grpPerfSum=0, grpWorked=0;
+      let grpActual=0;
+      let grpDayPerfSum=0, grpDaysWorked=0;
       subs.forEach(s=>{
+        let dayActual=0, dayPerfSum=0;
         grpFields.forEach(f=>{
           const v=parseFloat(s.fields?.[f.key])||0;
           if(v>0){
-            grpActual+=v;
+            dayActual+=v;
             const tgt=emp.targets[f.key]||0;
-            grpPerfSum+=tgt>0?(v/tgt)*100:100;
-            grpWorked++;
+            dayPerfSum+=tgt>0?Math.min((v/tgt)*100,100):100;
           }
         });
+        if(dayActual>0){ grpActual+=dayActual; grpDayPerfSum+=Math.min(dayPerfSum,100); grpDaysWorked++; }
       });
       if(!grpActual) return null;
-      const grpPct=Math.min(Math.round(grpPerfSum),100); // cap process % at 100%
-      const bg=grpPct>=100?'rgba(16,185,129,0.1)':grpPct>=60?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
-      const border=grpPct>=100?'#6ee7b7':grpPct>=60?'#fcd34d':'#fca5a5';
-      const col=grpPct>=100?'#065f46':grpPct>=60?'#78350f':'#991b1b';
+      // Average daily % for this process group (same method as overall)
+      const grpPct=grpDaysWorked>0?Math.min(Math.round(grpDayPerfSum/grpDaysWorked),100):0;
+      const bg=grpPct>=80?'rgba(16,185,129,0.1)':grpPct>=50?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
+      const border=grpPct>=80?'#6ee7b7':grpPct>=50?'#fcd34d':'#fca5a5';
+      const col=grpPct>=80?'#065f46':grpPct>=50?'#78350f':'#991b1b';
+      const grpDef=PROCESS_GROUPS[grpName];
       return `<span class="fwp-proc-pill" style="background:${bg};border-color:${border};color:${col}">
-        ${grp.icon} ${grpName} <b>${grpActual}</b> <span style="opacity:.75">${grpPct}%</span>
+        ${grpDef?.icon||''} ${grpName} <b>${grpActual}</b> <span style="opacity:.75">${grpPct}%</span>
       </span>`;
     }).filter(Boolean).join('');
 
