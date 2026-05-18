@@ -1094,7 +1094,7 @@ const PROCESS_GROUPS = {
 
 // ── UNIFIED PERFORMANCE CALCULATION ──
 // Process-based: sum actual vs sum target per process group over date range
-// Overall = average of active process %s, capped at 100%
+// Overall = sum of active process %s per day, capped at 100 per day, then averaged across submitted days
 // NO attendance factor — performance and attendance are separate
 
 function calcProcessPerf(emp, fromDate, toDate) {
@@ -1119,14 +1119,24 @@ function calcProcessPerf(emp, fromDate, toDate) {
   return result;
 }
 
-// Overall = average % of active processes, cap 100%
+// Overall = per-day sum of active process %s (capped 100 per day), then averaged across submitted days
+// Logic: Day score = sum of active process % that day, cap 100. Month score = avg of daily scores.
 // This is the SINGLE source of truth for all performance displays
 function calcOverallPerf(emp, fromDate, toDate) {
-  const procs=calcProcessPerf(emp,fromDate,toDate);
-  const active=Object.values(procs).filter(p=>p.actual>0);
-  if(!active.length) return 0;
-  const avg=active.reduce((a,p)=>a+p.pct,0)/active.length;
-  return Math.min(Math.round(avg),100);
+  const subs=(submissions[emp.id]||[]).filter(s=>s.date>=fromDate&&s.date<=toDate);
+  if(!subs.length) return 0;
+  const saved = submissions[emp.id];
+  const dailyScores = subs.map(s => {
+    submissions[emp.id] = [s];
+    const procs = calcProcessPerf(emp, s.date, s.date);
+    submissions[emp.id] = saved;
+    const active = Object.values(procs).filter(p=>p.actual>0);
+    if(!active.length) return 0;
+    return Math.min(active.reduce((a,p)=>a+p.pct,0), 100);
+  });
+  submissions[emp.id] = saved; // ensure restored
+  const avg = dailyScores.reduce((a,b)=>a+b,0) / dailyScores.length;
+  return Math.min(Math.round(avg), 100);
 }
 
 function getEmpScoreData(emp) {
@@ -1155,20 +1165,17 @@ function getEmpScoreData(emp) {
 // Reusable: calculate performance% for a single day entry
 // Only uses fields where actual > 0, vs that field's target
 function calcDayPerf(entry, emp) {
-  // Used for single-day views (day toggle panels)
-  // Uses process-group logic: avg of active processes for that day
+  // Single day: sum of active process %s, capped at 100
+  // e.g. Graphics 50% + Feeds 50% = 100% (not averaged to 50%)
   if(!entry) return 0;
   const ds = entry.date;
-  const dayEntry = {date:ds, fields:entry.fields};
-  // Build a fake single-day submission array and use calcProcessPerf
-  const fakeSubs=[entry];
   const savedSubs=submissions[emp.id];
-  submissions[emp.id]=fakeSubs;
+  submissions[emp.id]=[entry];
   const procs=calcProcessPerf(emp,ds,ds);
   submissions[emp.id]=savedSubs;
   const active=Object.values(procs).filter(p=>p.actual>0);
   if(!active.length) return 0;
-  return Math.min(Math.round(active.reduce((a,p)=>a+p.pct,0)/active.length),100);
+  return Math.min(active.reduce((a,p)=>a+p.pct,0), 100);
 }
 
 // Calculate performance% for a date range
@@ -1346,7 +1353,7 @@ function renderPerfTable() {
         ?workedFields.map(f=>{
             const actual=parseFloat(entry.fields[f.key])||0;
             const tgt=s.emp.targets[f.key]||0;
-            const pct=tgt>0?Math.min(Math.round((actual/tgt)*100),200):100;
+            const pct=tgt>0?Math.min(Math.round((actual/tgt)*100),100):100;
             const bc=pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
             return `<span style="display:inline-flex;align-items:center;gap:4px;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:3px 8px;font-size:11px;margin:2px">
               <span style="color:var(--text2)">${f.lbl}</span>
@@ -1459,26 +1466,19 @@ function renderFWP() {
     const rangePerf=calcOverallPerf(emp,from,to); // unified calc
     const perfColor=rangePerf>=100?'#10b981':rangePerf>=60?'#f59e0b':'#ef4444';
 
-    // Process breakdown — using same per-day logic as calcDayPerf for consistency
+    // Process breakdown — per group: actual vs target across range, cap 100
     const procRows=Object.entries(PROCESS_GROUPS||{}).map(([grpName,grp])=>{
       const grpFields=FIELDS.filter(f=>grp.keys.includes(f.key)&&f.type!=='text');
-      let grpActual=0;
-      let grpDayPerfSum=0, grpDaysWorked=0;
+      let grpActual=0, grpTarget=0;
       subs.forEach(s=>{
-        let dayActual=0, dayPerfSum=0;
         grpFields.forEach(f=>{
           const v=parseFloat(s.fields?.[f.key])||0;
-          if(v>0){
-            dayActual+=v;
-            const tgt=emp.targets[f.key]||0;
-            dayPerfSum+=tgt>0?Math.min((v/tgt)*100,100):100;
-          }
+          if(v>0){ grpActual+=v; grpTarget+=(emp.targets[f.key]||0); }
         });
-        if(dayActual>0){ grpActual+=dayActual; grpDayPerfSum+=Math.min(dayPerfSum,100); grpDaysWorked++; }
       });
       if(!grpActual) return null;
-      // Average daily % for this process group (same method as overall)
-      const grpPct=grpDaysWorked>0?Math.min(Math.round(grpDayPerfSum/grpDaysWorked),100):0;
+      // Cap each process group at 100%
+      const grpPct=grpTarget>0?Math.min(Math.round((grpActual/grpTarget)*100),100):(grpActual>0?100:0);
       const bg=grpPct>=80?'rgba(16,185,129,0.1)':grpPct>=50?'rgba(245,158,11,0.1)':'rgba(239,68,68,0.08)';
       const border=grpPct>=80?'#6ee7b7':grpPct>=50?'#fcd34d':'#fca5a5';
       const col=grpPct>=80?'#065f46':grpPct>=50?'#78350f':'#991b1b';
@@ -2545,7 +2545,7 @@ function buildFWTable(emp, subs) {
       const actual = parseFloat(entry.fields[f.key])||0;
       const target = emp.targets[f.key]||0;
       if(actual===0 && target===0) return '';
-      const pct = target>0 ? Math.min(Math.round((actual/target)*100),200) : (actual>0?100:0);
+      const pct = target>0 ? Math.min(Math.round((actual/target)*100),100) : (actual>0?100:0);
       const barColor = pct>=100?'#10b981':pct>=60?'#f59e0b':'#ef4444';
       return `<tr>
         <td>${f.lbl}</td>
