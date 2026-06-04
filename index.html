@@ -1085,11 +1085,13 @@ function getActiveFields(empId, fromDate, toDate) {
 // ══════════════════════════════════════════════════
 const PROCESS_GROUPS = {
   'Production':   {keys:['feeds_prod','plp_prod','clone_prod','qsg_prod'],   color:'#4f46e5', icon:'⚙'},
+  'Content':      {keys:['feeds_content','plp_content'],                     color:'#f97316', icon:'✍'},
   'Graphics':     {keys:['feeds_graphics','plp_graphics'],                    color:'#ec4899', icon:'🎨'},
   'QC':           {keys:['qc_feeds','qc_plp','qc_content','qc_qsg'],         color:'#10b981', icon:'✅'},
   'Upload & Del': {keys:['feeds_upload','plp_upload','clone_upload','files_delivered','qsg_delivered'], color:'#f59e0b', icon:'📦'},
   'Price Mon':    {keys:['price_mon','price_mon_qc'],                         color:'#06b6d4', icon:'💰'},
   'Meta & SEO':   {keys:['meta_title','meta_long','meta_qc','meta_html','decann','landmark'], color:'#8b5cf6', icon:'📝'},
+  'Img Collection':{keys:['img_collection'],                                  color:'#8b5cf6', icon:'🖼'},
 };
 
 // ── UNIFIED PERFORMANCE CALCULATION ──
@@ -1498,7 +1500,7 @@ function renderFWP() {
         <div class="fwp-total">${total.toLocaleString()}</div>
         <div class="fwp-perf" style="color:${perfColor}">${rangePerf}%</div>
       </td>
-      <td><div class="fwp-processes">${procRows||'<span style="color:var(--text3);font-size:11px">No data for ${label}</span>'}</div></td>
+      <td><div class="fwp-processes">${procRows||`<span style="color:var(--text3);font-size:11px">No data for ${label}</span>`}</div></td>
     </tr>`;
   });
   tbody.innerHTML=rows.join('');
